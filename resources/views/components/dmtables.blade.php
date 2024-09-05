@@ -9,17 +9,9 @@
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerCandidate">
               <i class="ri-sticky-note-add-fill"></i>Nuevo
             </button>
-            <button type="button" class="btn btn-success" id="showElementImport" data-bs-toggle="modal" data-bs-target="#importcandidate">
-              <i class="ri-sticky-note-add-fill"></i>Importación Candidatos
-            </button>
+            
         </div>
-        <div class="col-md-4">
-          @foreach ($perfil as $pu)
-              @if ($pu->ingreso===1)
-                  <a href="{{route('downloadTemplateCandidate')}}" class="btn btn-success btn-block mb-2 mx-2 mt-2" ><i class="ri-file-excel-2-fill"></i> Plantilla de Candidatos</a>
-              @endif
-          @endforeach
-      </div>
+       
       <div class="col-md-4">
         @foreach ($perfil as $pu)
               @if ($pu->egreso===1)
