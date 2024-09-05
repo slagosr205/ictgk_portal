@@ -2,17 +2,18 @@
     use Jenssegers\Date\Date;
 @endphp
 
+
 <div class="container">
        <div class="row ">
         <div class="col-md-4">
             <!-- Button trigger modal -->
             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerCandidate">
-              <i class="ri-sticky-note-add-fill"></i>Nuevo
+              <i class="ri-sticky-note-add-fill"></i>Nuevo Candidato
             </button>
             
         </div>
        
-      <div class="col-md-4">
+      <div class="col-md-2">
         @foreach ($perfil as $pu)
               @if ($pu->egreso===1)
                 <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#importOut"><i class="ri-file-upload-line py-4"></i>Importar Egresos</button>
@@ -49,7 +50,7 @@
     @endif
 
     <x-modal-registro/>
-    <table id="tbcandidatos" class="table table-striped display" style="width:100%">
+    <table id="tbcandidatos" class="table table-striped display table-bordered border" style="width:100%">
         <thead>
             <tr>
                 <th><button class="btn btn-info" id="btnEgresoMasivo"> <i class="ri-file-download-line py-4"></i> Exportar Egresos</button></th>

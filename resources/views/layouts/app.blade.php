@@ -36,6 +36,7 @@
                 'resources/js/libpuestos/puestos.js'
                 ])
                
+               
 </head>
 @guest
     <body class="login2">

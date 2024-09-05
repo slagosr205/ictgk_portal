@@ -32,7 +32,7 @@ use Maatwebsite\Excel\Facades\Excel;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-Route::post('login', [LoginController::class, 'attemptLogin'])->name('login');
+/*Route::post('login', [LoginController::class, 'attemptLogin'])->name('login');
 Route::get('register',function(){
   $empresas = Empresas::all();
         $roles=PerfilModel::all();
@@ -44,8 +44,8 @@ Route::get('register',function(){
 Route::post('logout',function(){
   Auth::logout();
   return redirect('/');
-})->name('logout');
-//Auth::routes();
+})->name('logout');*/
+Auth::routes();
 Route::get('/', function () {
   // Verifica si el usuario está autenticado
   if (Auth::check()) {
@@ -106,7 +106,7 @@ Route::get('/dmtables',function(){
 Route::post('/carga-masiva',[App\Http\Controllers\CandidatosController::class,'recibirCsvCandidatos'])->name('cargar');
 Route::get('/informes',[App\Http\Controllers\InformesController::class, 'GetInformes'])->name('informes');
 Route::get('/infopersonal/{dni}',[App\Http\Controllers\CandidatosController::class, 'GetIndividualInfo'])->name('infopersonal');
-Route::post('/actualizacion-ficha2',[App\Http\Controllers\CandidatosController::class,'Actualizacion_ficha'])->name('actualizacion_ficha');
+Route::post('/actualizacion-ficha',[App\Http\Controllers\CandidatosController::class,'Actualizacion_ficha'])->name('actualizacion_ficha');
 
 /**Recibir ingresos masivos, hara validacion de todos los ingresos 
  * 1. Validar que existan, sino existen en la tabla candidatos entonces que se pueda registrar primero

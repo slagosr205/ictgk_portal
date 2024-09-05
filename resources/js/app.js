@@ -17,6 +17,10 @@ var table=$('#tbcandidatos').DataTable({
    
     responsive:true,
     ordering:false,
+    initComplete:function(){
+        var searchInput = $('#dt-search-0');
+            searchInput.addClass('border');
+    }
 });
 var tbperfiles=new DataTable('#tbperfiles')
 
@@ -266,7 +270,7 @@ dni.addEventListener('keypress',function(e){
 function ActualizaFicha(correo, telefono, direccion,id)
 {
     $.ajax({
-        url:'/actualizacion-ficha2/',
+        url:'/actualizacion-ficha/',
         type:'POST',
         headers:{
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

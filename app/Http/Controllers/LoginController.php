@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Log;
+
 class LoginController extends Controller
 {
     //
@@ -24,12 +26,15 @@ class LoginController extends Controller
 
         $user = Auth::getProvider()->retrieveByCredentials($credentials);
        
-        if ($user) {
+        if ($user && Hash::check($request->password,$user->password)) {
             Auth::login($user, $request->filled('remember'));
-            
+            Log::info($user);
             return redirect()->intended('/');
         }else{
-           dd($user);
+           //dd(password_verify($request->password,$user->password));
+          $valor=Hash::make('rodriguez');
+          dd(Hash::check('rodriguez',$valor),$valor);
+          Log::info('no llego');
         }
 
         return false;
