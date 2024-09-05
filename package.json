@@ -1,0 +1,32 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "devDependencies": {
+        "@popperjs/core": "^2.11.6",
+        "axios": "^1.6.4",
+        "bootstrap": "^5.2.3",
+        "laravel-vite-plugin": "^1.0.0",
+        "sass": "^1.56.1",
+        "vite": "^5.0.0"
+    },
+    "dependencies": {
+        "bootstrap-icons": "^1.11.3",
+        "chart.js": "^4.4.1",
+        "chartjs-plugin-datalabels": "^2.2.0",
+        "datatables.net-bs5": "^2.0.2",
+        "datatables.net-buttons-dt": "^3.0.1",
+        "datatables.net-dt": "^1.13.8",
+        "datatables.net-responsive-dt": "^3.0.0",
+        "flatpickr": "^4.6.13",
+        "jquery": "^3.7.1",
+        "js-datepicker": "^5.18.2",
+        "material-dashboard": "^3.0.9",
+        "remixicon": "^4.2.0",
+        "sweetalert2": "^11.6.13",
+        "waypoints": "^4.0.1"
+    }
+}

@@ -1,0 +1,19 @@
+<IfModule mod_rewrite.c>
+    # Verifica que mod_rewrite esté habilitado
+    RewriteEngine On
+
+    # Maneja la cabecera de autorización (para API o autenticación)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirige las URL que terminan en una barra si no es un directorio
+    #RewriteCond %{REQUEST_FILENAME} !-d
+    #RewriteCond %{REQUEST_URI} (.+)/$
+    #RewriteRule ^ %1 [L,R=301]
+
+    # Envía todas las solicitudes a index.php si no son archivos o directorios existentes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
