@@ -83,7 +83,7 @@
                                @foreach ($perfil as $pu)
                                 @if ($pu->perfilesdescrip==='admin')
                                     <td style="text-align: center; vertical-align: middle;" class="cambiarestado">
-                                        <button class="btn btndesbloqueoRecomendacion" data-bs-toggle="modal" data-bs-target="#modaldebloqueoRecomendacion" >
+                                        <button class="btn btn-info btndesbloqueoRecomendacion" data-bs-toggle="modal" data-bs-target="#modaldebloqueoRecomendacion" data-identidad="{{$il->identidad}}" data-empresaID="{{$il->id_empresa}}">
                                             <i class="ri-information-line" style="font-size: 32px;color:#d6c73d"></i>
                                         </button>
                                     </td>

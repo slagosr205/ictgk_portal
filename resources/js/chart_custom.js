@@ -1,6 +1,8 @@
+import axios from 'axios';
 import Chart from 'chart.js/auto';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-
+import 'datatables.net-responsive-dt';
+import 'datatables.net-buttons-dt';
 import flatpickr from "flatpickr";
 
 var nombresEmpresas = ["Empresa 1", "Empresa 2", "Empresa 3", "Empresa 4", "Empresa 5", "Empresa 6", "Empresa 7", "Empresa 8", "Empresa 9", "Empresa 10"];
@@ -408,6 +410,52 @@ $(document).on('click','#btnContrast',function(e){
         localStorage.setItem('theme','dark')
     }
 })
+
+
+   const monitorSesiones=()=>
+   {
+       /* const response =await axios.get('/monitor-sesion');
+
+        const data= response.data
+
+        console.log(data)*/
+
+        $('#usersTable').DataTable({
+
+            ajax:{
+                url:'/monitor-sesion',
+                dataSrc:'',
+            },
+            initComplete:function(){
+                var searchInput = $('#dt-search-0');
+                    searchInput.addClass('border');
+            },
+            columns:[
+                    { data: 'id' },
+                    { data: 'name' },
+                    { data: 'nombre' },
+                    { data: 'perfilesdescrip' },
+                    { 
+                        data: 'last_session', 
+                        render: function(data) {
+                            return data ? new Date(data).toLocaleDateString('es-HN', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                              }) : 'Sin sesión';
+                        }
+                    },
+                    { 
+                        data: 'status',
+                        render: function(data) {
+                            return data === 1 ? 'Activo' : 'Inactivo';
+                        }
+                    }
+            ]
+        })
+   }
+
+    monitorSesiones()
 
 }
 

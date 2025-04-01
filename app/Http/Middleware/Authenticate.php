@@ -2,9 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
 use Closure;
+use Illuminate\Support\Facades\Auth;
+
 class Authenticate extends Middleware
 {
     /**
@@ -28,6 +31,11 @@ class Authenticate extends Middleware
             auth()->logout();
             return redirect('/login')->withErrors(['Your account is blocked.']);
         }
+
+        $user = User::find(Auth::user()->id);
+            
+        $user->last_session = now();
+        $user->save();
 
 
         return $next($request);

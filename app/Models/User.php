@@ -28,7 +28,9 @@ class User extends Authenticatable
         'phone',
         'about',
         'password_confirmation',
+        'last_session',
         'status',
+        
     ];
 
     /**
@@ -54,5 +56,15 @@ class User extends Authenticatable
     {
         $this->attributes['password'] = bcrypt($password);
     }*/
+
+    // Evento para llenar el campo last_session automáticamente con un timestamp
+        protected static function boot()
+        {
+            parent::boot();
+
+            static::creating(function ($user) {
+                $user->last_session = now(); // now() genera un timestamp
+            });
+        }
 
 }

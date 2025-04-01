@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PuestosModel;
 use App\Models\DepartamentosModel;
-use Validator;
+use Illuminate\Support\Facades\Validator;
+
 class PuestosController extends Controller
 {
     //
@@ -28,7 +29,7 @@ class PuestosController extends Controller
             'nombrepuesto' => 'required|string|max:255',
             'departamento_id' => 'required|integer'
         ];
-
+        
         $validatorFieldsPositions=Validator::make($request->all(),$rule);
 
         if($validatorFieldsPositions->fails())
@@ -74,5 +75,15 @@ class PuestosController extends Controller
         return redirect()->back()->with(['updatedPositionserror'=>$e->getMessage()]);
     }
         
+    }
+
+    public function puestosxEmpresas($idEmpresas)
+    {
+        $puesto=PuestosModel::select('puestos.id','puestos.nombrepuesto','departamentos.id as departamento_id','departamentos.nombredepartamento')
+        ->join('departamentos','departamentos.id','=','puestos.departamento_id')
+        ->join('empresas','empresas.id','=','departamentos.empresa_id')
+        ->where('empresas.id',$idEmpresas)->get();
+
+        return view('components.selected-positions',['puestos'=>$puesto]);
     }
 }

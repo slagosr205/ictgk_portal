@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Candidatos;
 use App\Models\Ingresos;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 class InformesController extends Controller
 {
@@ -120,5 +121,18 @@ class InformesController extends Controller
 
 
         return response()->json($renunciasxgenero);
+    }
+
+    /**
+     * Monitorireo de Sesiones de todos los usuarios
+     */
+    public function GetLastSessionUser()
+    {
+        $users=User::select('users.*','empresas.nombre','perfiles.perfilesdescrip' )
+        ->join('empresas','empresas.id','=','users.empresa_id')
+        ->join('perfiles','perfiles.id','=','users.perfil_id')
+        ->get();
+
+        return response()->json($users);
     }
 }

@@ -1,7 +1,8 @@
-<div>
+<div class="border">
     <!-- Waste no more time arguing what a good man should be, be one. - Marcus Aurelius -->
     @php
       $encontrado = false;
+  
     @endphp
 
 
@@ -14,13 +15,26 @@
     
       <div class="col-md-2">
         <label for="empresas">Empresas Actual:</label>
-        @foreach ($empresas as $em)
-        @if ($em->id===auth()->user()->empresa_id)
-        <input type="hidden" id="id_empresa" name="id_empresa" value="{{$em->id}}">
-          <p><strong name="{{$em->id}}">{{$em->nombre}}</strong></p>
-        @endif
+        {{----Evaluando si el usuario es administrador------}}
+        @if ($perfil[0]->perfilesdescrip!=='admin')
+          @foreach ($empresas as $em)
+            @if ($em->id===auth()->user()->empresa_id)
+              <input type="hidden" id="id_empresa" name="id_empresa" value="{{$em->id}}">
+              <p><strong name="{{$em->id}}">{{$em->nombre}}</strong></p>
+            @endif
+              
+          @endforeach
+        @else
+
+          @foreach ($empresas as $em)
+            @if ($informacionlaboral[0]['activo']==='s' && $em->id===$informacionlaboral[0]['id_empresa'])
+              <input type="hidden" id="id_empresa" name="id_empresa" value="{{$em->id}}">
+              <p><strong name="{{$em->id}}">{{$em->nombre}}</strong></p>
+            @endif
             
-        @endforeach
+          @endforeach
+        @endif
+        
     
       </div>
      {{--- <div class="col-md-2">
@@ -75,7 +89,7 @@
       <input type="hidden" id="identidad" name="identidad" value="{{ $informacionlaboral[0]['identidad']}}">
     </div>
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label for="egreso">Forma de egreso:</label>
         <select name="tipo_egreso" id="tipo_egreso" >
           <option value=""><------------></option>
@@ -83,11 +97,11 @@
           <option value="Involuntario">Involuntario</option>
         </select>
       </div>
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label for="tiempo">Fecha de egreso:</label>
         <input type="date" name="tiempo" id="tiempo">
       </div>
-      <div class="col-md ">
+      <div class="col-md-2 ">
         <label for="forma_egreso">Motivo de egreso:</label>
           <select name="forma_egreso" id="forma_egreso" >
             <option value=""><------------></option>
@@ -101,7 +115,7 @@
               
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
         <label for="recomendado">Recomendado:</label>
         <select name="recomendado" id="recomendado" >
           <option value="0"><------------></option>

@@ -5,23 +5,32 @@
 
 <div class="container">
        <div class="row ">
-        <div class="col-md-4">
-            <!-- Button trigger modal -->
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerCandidate">
-              <i class="ri-sticky-note-add-fill"></i>Nuevo Candidato
-            </button>
-            
-        </div>
        
-      <div class="col-md-2">
-        @foreach ($perfil as $pu)
-              @if ($pu->egreso===1)
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#importOut"><i class="ri-file-upload-line py-4"></i>Importar Egresos</button>
-              @endif
-        @endforeach
+       
+        <div class="col-md-6">
+          <div class="btn-group" role="group">
+          
+              @foreach ($perfil as $pu)
+                  @if ((bool)$pu->ingreso)
+                  <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#registerCandidate">
+                    <i class="ri-sticky-note-add-fill"></i>Nuevo Candidato
+                  </button>
+                  @endif
+                  @if ((bool)$pu->egreso)
+                      <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importOut">
+                          <i class="ri-file-upload-line py-4"></i> Importar Egresos
+                      </button>
+                  @endif
+                  @if ((bool) $pu->bloqueocolaborador)
+                      <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#importBlockModal"><i class="ri-spam-2-line py-4"></i>Bloqueo Masivo</button>
+                  @endif
+              @endforeach
+          </div>
       </div>
+
         <x-import-candidate />
         <x-modal-importar-egresos />
+        <x-import-block-candidate />
     </div>
     <br>
     @if(session('mensaje'))

@@ -2,6 +2,7 @@
 
 namespace App\View\Components;
 
+use App\Models\PerfilModel;
 use Closure;
 use Illuminate\View\Component;
 use Illuminate\Contracts\View\View;
@@ -21,13 +22,25 @@ class Ingreso extends Component
     public function __construct($informacionlaboral,$empresas, $candidato)
     {
         //
+        $perfil=PerfilModel::select('perfilesdescrip')
+        ->where('id','=',auth()->user()->perfil_id)
+        ->first();
+        // dd($perfil);
+        if($perfil->perfilesdescrip!=='admin')
+        {
+            $this->puestos=PuestosModel::select('puestos.*')
+            ->join('departamentos','departamentos.id','=','puestos.departamento_id')
+            ->where('departamentos.empresa_id',auth()->user()->empresa_id)->get();
+           
+        }else{
+            $this->puestos=PuestosModel::all();
+            
+        }
 
-        $this->puestos=PuestosModel::select('puestos.*')
-        ->join('departamentos','departamentos.id','=','puestos.departamento_id')
-        ->where('departamentos.empresa_id',auth()->user()->empresa_id)->get();
-        $this->informacionlaboral=$informacionlaboral;
-        $this->empresas=$empresas;
-        $this->candidato=$candidato;
+            $this->informacionlaboral=$informacionlaboral;
+            $this->empresas=$empresas;
+            $this->candidato=$candidato;
+        
     }
 
     /**

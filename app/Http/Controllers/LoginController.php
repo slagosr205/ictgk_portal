@@ -17,7 +17,7 @@ class LoginController extends Controller
 
     public function __construct()
     {
-        $this->middleware('guest')->except('logout');
+        $this->middleware(['guest','update.last_session'])->except('logout');
     }
 
     protected function attemptLogin(Request $request)
@@ -29,6 +29,10 @@ class LoginController extends Controller
         if ($user && Hash::check($request->password,$user->password)) {
             Auth::login($user, $request->filled('remember'));
             Log::info($user);
+           
+           /* $user2 = Auth::user();
+            $user2->last_session=now();
+            $user2->save();*/
             return redirect()->intended('/');
         }else{
            //dd(password_verify($request->password,$user->password));

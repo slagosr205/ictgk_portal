@@ -45,7 +45,7 @@
       @switch($infocandidatos->activo)
         @case('n')
         
-          @if ($misma_empresa )
+          @if ($misma_empresa || $perfil[0]->perfilesdescrip==='admin' )
             <x-historial-laboral :informacionLaboral="$informacionlaboral" :datosEmpresa="$datosEmpresaActual" />
             @if ($perfil[0]->egreso===1 )
               <x-egreso :informacionlaboral="$informacionlaboral" :empresas="$datosEmpresaActual" /> 
@@ -79,7 +79,7 @@
               que lo quiere contratar no podra por la condicion lo que si podra hacer es enviar un correo desde la aplicacion con los datos del usuario
               para que Reclutamiento de ALTIA pueda hacer la respectiva validacion, caso contrario el usuario podra obtener la vista de Ingreso para hacer la accion---}}
             @if (!$bloqueo_recomendado)
-              @if ($perfil[0]->ingreso===1)
+              @if ($perfil[0]->ingreso===1 )
                 <x-ingreso :informacionlaboral="$informacionlaboral" :empresas="$datosEmpresaActual" :candidato="$infocandidatos"  /> 
               @else
                 <div class="alert alert-warning">

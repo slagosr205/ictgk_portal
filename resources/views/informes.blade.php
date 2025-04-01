@@ -122,6 +122,28 @@
         <input  type="text" id="datePicker" placeholder="Select Date Range">
         <canvas class="grafico px-4" id="grafica6">Gráfico 2</canvas>
     </div>
+
+    <div class="col-md-6 bg-gradient-dark shadow-dark border-radius-lg py-3 pe-1 p-2">
+        <h3 class="text-center card-title">Monitoreo de Sesion</h3>
+       
+            <table id="usersTable" class="display">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Empresa ID</th>
+                        <th>Perfil ID</th>
+                        <th>Última Sesión</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Los datos se cargarán aquí automáticamente -->
+                </tbody>
+            </table>
+        
+    </div>
+
 </div>
 
 @endsection

@@ -6,7 +6,7 @@
         
             <div class="shadow-lg card mb-5 p-5 col-md-3 sombra " >
                 <div class="card-header text-center border bg-gray-200" >
-                    <img src="{{Storage::url('GV_LogoFinal_pantone.png')}}" alt="Logo" width="80%">
+                    <img src="{{Storage::url('logo__Altia.svg')}}" alt="Logo" width="80%">
                     <h4 class="">{{ __('Login') }}</h4>
                 </div>
 

@@ -1,4 +1,4 @@
-import jQuery, { data } from 'jquery';
+import jQuery, { data, error } from 'jquery';
 import DataTable from 'datatables.net-dt';
 import 'datatables.net-responsive-dt';
 import Swal from 'sweetalert2';
@@ -61,6 +61,22 @@ if (notificationupdatedPositionserror.length > 0) {
 
 
 
+$(document).on('change','#id_empresa', function(){
+    const id_empresa=$(this).val()
 
+    fetch(`/consultaPuestosxEmpresas/${id_empresa}`)
+    .then(response=>response.text())
+    .then(
+        data=>{
+
+            $('#positions-selected').html(data);
+        }
+            
+    )
+    .catch(err=>console.log(err))
+
+
+    
+})
 
 

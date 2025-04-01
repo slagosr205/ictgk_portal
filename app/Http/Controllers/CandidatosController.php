@@ -31,6 +31,9 @@ use App\Exports\ExportTemplateOut;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\ArrayFieldCountException;
+use App\Imports\CandidateImport;
+use App\Imports\CsvImport;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Swift_TransportException;
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -60,7 +63,7 @@ class CandidatosController extends Controller
      */
 
 
-    private function processData(Request $re):array
+    public function processData(Request $re):array
     {
         $datos=array();
            // Verifica si la solicitud tiene un archivo CSV adjunto
@@ -123,6 +126,418 @@ class CandidatosController extends Controller
     }
     return $datos;
 }
+
+
+    public function processData2(Request $re): array
+    {
+        if (!$re->hasFile('archivo_csv')) {
+            return ['error' => 'No se adjuntó un archivo CSV'];
+        }
+
+        try {
+            $archivoCsv = $re->file('archivo_csv');
+            // Obtén los datos desde el importador
+            $datos = Excel::toArray(new CsvImport, $archivoCsv);
+    
+            // Verifica si hay datos y convierte a un array asociativo
+            if (!empty($datos[0])) {
+               // El primer elemento contiene los encabezados
+            $headers = array_map('trim', $datos[0][0]);
+                
+            $result = [];
+
+            // Procesar las filas de datos (ignorando la primera que son los encabezados)
+            foreach (array_slice($datos[0], 1) as $row) {
+                if (!empty(array_filter($row))) { // Ignorar filas vacías
+                    // Verificar que cada elemento sea una cadena antes de aplicar trim
+                    $trimmedRow = array_map(function ($value) {
+                        return is_string($value) ? trim($value) : $value;  // Solo aplica trim si es una cadena
+                    }, $row);
+
+                    // Asociar los valores a sus respectivos encabezados
+                    $fila = array_combine($headers, $trimmedRow);
+
+                    // Elimina la columna 'validacion' y valores vacíos
+                    $fila = array_diff_key($fila, array_flip(['validacion']));
+                    $fila = array_filter($fila); // Elimina valores vacíos
+
+                    $result[] = $fila;
+                }
+            }
+
+            return $result;
+            }
+    
+            return []; // Si no hay datos válidos
+        } catch (\Exception $exception) {
+            return ['error' => 'Error al procesar el CSV: ' . $exception->getMessage()];
+        }
+    }
+
+    //Validación de Campos Insuficientes
+
+    private function validarCamposInsuficientes($datos, $columnHeaders)
+    {
+        $indicesConMenosDe13Campos = [];
+
+        foreach ($datos as $indice => $subArray) {
+            if (count($subArray) < count($columnHeaders) + 1) {
+                $camposFaltantes = array_diff($columnHeaders, array_keys($subArray));
+                $lineNumber=$indice+1;
+                $indicesConMenosDe13Campos[] = [
+                    'identidad' => $datos[$indice]['identidad'],
+                    'nombre' => $datos[$indice]['nombre'],
+                    'campos_faltantes' => $camposFaltantes, 
+                    'LineNumber'=>$lineNumber,
+                ];
+            }
+        }
+
+        return $indicesConMenosDe13Campos;
+    }
+
+
+private function formatUserDate($userDate)
+{
+    // Primero intentamos con el parseo libre de Carbon
+    try {
+        // Intentamos analizar la fecha usando Carbon
+        $date = Carbon::parse($userDate);
+        // Devolvemos la fecha en formato YYYY-MM-DD para la base de datos
+        return $date->format('Y-m-d');
+    } catch (\Exception $e) {
+        // Si no se puede analizar la fecha con Carbon, continuamos con otros intentos
+    }
+
+    // Definir algunos formatos manualmente para fechas más específicas
+    $formats = [
+        'd-m-Y',        // 29-01-2024
+        'd-M-Y',        // 29-ene-2024
+        'd-F-Y',        // 29-enero-2024
+        'F-d-Y',        // enero-29-2024
+        'Y-m-d',        // 2024-01-29
+        'Y-m-d H:i:s',  // 2024-01-29 15:00:00
+        'd/m/Y',        // 29/01/2024
+        'd/m/Y H:i',    // 29/01/2024 15:00
+    ];
+
+    // Intentar con cada formato
+    foreach ($formats as $format) {
+        try {
+            $date = Carbon::createFromFormat($format, $userDate);
+            // Si se logra parsear, devolvemos la fecha en el formato estándar de base de datos
+            return $date->format('Y-m-d');
+        } catch (\Exception $e) {
+            // Continuamos con el siguiente formato si este no es válido
+            continue;
+        }
+    }
+
+    // Si no se pudo parsear la fecha, retornar null o un valor predeterminado
+    return null;
+}
+
+
+    //Validación de Formato de Fechas
+
+    private function validarFormatoFecha($datos)
+    {
+        $registrosconFechamalForma = [];
+        
+        foreach ($datos as $indice => $fila) {
+            // Limpiar el campo 'identidad' (sin guiones)
+            $datos[$indice]['identidad'] = str_replace('-', '', $fila['identidad']);
+            $lineNumber=$indice+1;
+            // Comprobar si ambas fechas (fecha_nacimiento y fechaIngreso) están presentes
+            if (!empty($fila['fecha_nacimiento']) && !empty($fila['fechaIngreso'])) {
+                // Intentamos formatear ambas fechas utilizando la función 'formatUserDate'
+                $fecha_nacimiento = $this->formatUserDate($fila['fecha_nacimiento']);
+                $fechaIngreso = $this->formatUserDate($fila['fechaIngreso']);
+                
+                // Si las fechas son válidas, las asignamos
+                if ($fecha_nacimiento && $fechaIngreso) {
+                    $datos[$indice]['fecha_nacimiento'] = $fecha_nacimiento;
+                    $datos[$indice]['fechaIngreso'] = $fechaIngreso;
+                } else {
+                    // Si no se pudo convertir las fechas, agregar al registro de error
+                      // Si no se pudo convertir alguna de las fechas, agregar al registro de error indicando qué campo es el que falló
+                    $mensajeError = 'Las fechas deben estar en un formato válido (dd/mm/yyyy, mm/dd/yyyy, o similares)';
+                    
+                    if (!$fecha_nacimiento) {
+                        $mensajeError .= ' - Error en "fecha_nacimiento". Valor recibido: ' . $fila['fecha_nacimiento'];
+                    }
+                    if (!$fechaIngreso) {
+                        $mensajeError .= ' - Error en "fechaIngreso". Valor recibido: ' . $fila['fechaIngreso'];
+                    }
+                    $registrosconFechamalForma[] = [
+                        'identidad' => $datos[$indice]['identidad'],
+                        'nombre' => $datos[$indice]['nombre'],
+                        'mensaje' =>  $mensajeError,
+                        'LineNumber'=>$lineNumber,
+                    ];
+                }
+            }
+        }
+        
+        // Devolver los datos con las fechas corregidas y los registros con fecha mal formateada
+        return [$datos, $registrosconFechamalForma];
+    }
+    
+    /**
+     * un campo bloqueo_recomendacion en la tabla Candidatos que indica si un candidato tiene una restricción de recomendación.
+     * Si el bloqueo de recomendación se obtiene de otra tabla o de un conjunto de datos diferente, 
+     * dime de dónde proviene $validarRecomendacion en tu código original y ajusto la función según corresponda. 🚀
+     */
+    private function tieneBloqueoRecomendacion($identidad)
+    {
+        return Ingresos::where('identidad', $identidad)->where('bloqueo_recomendado', 's')->exists();
+    }
+
+
+    private function crearOActualizarCandidato($candidatoData)
+    {
+        $existingCandidato = Candidatos::where('identidad', $candidatoData['identidad'])->first();
+
+        if ($existingCandidato) {
+            // Si el candidato tiene estado 'x' o está bloqueado, no actualizar
+            if ($existingCandidato->activo === 'x' || $this->tieneBloqueoRecomendacion($candidatoData['identidad'])) {
+                return ['estado' => 'solicitar Informacion RH ALTIA', 'candidato' => $existingCandidato];
+            }
+
+            // Si el candidato está activo, actualizar a 'n'
+            if ($existingCandidato->activo === 's') {
+                $existingCandidato->update(['activo' => 'n']);
+                return ['estado' => 'registro actualizado', 'candidato' => $existingCandidato];
+            }
+
+            return ['estado' => 'registro activo', 'candidato' => $existingCandidato];
+        }
+
+        // Si no existe, crearlo con 'activo' => 'n'
+        $nuevoCandidato = Candidatos::create(array_merge($candidatoData, ['activo' => 'n']));
+        return ['estado' => 'registro nuevo', 'candidato' => $nuevoCandidato];
+    }
+
+    
+    private function insertarCandidatosMasivos($datos)
+    {
+        $resultados = [];
+
+        foreach ($datos as $candidatoData) {
+            $resultado = $this->crearOActualizarCandidato($candidatoData);
+            $resultados[] = [
+                'identidad' => $candidatoData['identidad'],
+                'estado' => $resultado['estado'],
+                'nombre' => $candidatoData['nombre'] . ' ' . $candidatoData['apellido']
+            ];
+        }
+
+        return $resultados;
+    }
+
+
+    private function validarEstadoIngreso($identidad, $idEmpresaActual)
+    {
+        // Validar si el candidato tiene recomendación negativa
+        $recomendado = Ingresos::where('identidad', $identidad)
+            ->where('recomendado', 'n')
+            ->exists();
+
+        if ($recomendado) {
+            return 'Pedir información a Recursos Humanos ALTIA';
+        }
+
+        // Verificar si existe en otra empresa activa
+        $existeOtraEmpresa = Ingresos::where('identidad', $identidad)
+            ->where('id_empresa', '!=', auth()->user()->empresa_id)
+            ->where('activo', 's')
+            ->exists();
+
+        if ($existeOtraEmpresa) {
+            return 'Ya registrado en otra empresa';
+        }
+
+        // Verificar si existe en la misma empresa y está activo
+        $existeMismaEmpresa = Ingresos::where('identidad', $identidad)
+            ->where('id_empresa', auth()->user()->empresa_id)
+            ->where('activo', 's')
+            ->exists();
+
+        if ($existeMismaEmpresa) {
+            return 'Ya existe en la misma empresa';
+        }
+
+         // Verificar si existe en la misma empresa pero está inactivo
+        $existeInactivoMismaEmpresa = Ingresos::where('identidad', $identidad)
+        ->where('id_empresa', auth()->user()->empresa_id)
+        ->where('activo', 'n')
+        ->first(); // Usamos first() en lugar de exists() para obtener el registro
+
+        if ($existeInactivoMismaEmpresa) {
+            return 'Recontratado';
+        }
+
+        // Si pasa todas las validaciones, es un nuevo ingreso
+        return 'Registro nuevo';
+    }
+
+
+    
+    
+
+    
+    private function crearOActualizarIngreso($ingresoData)
+    {
+        return Ingresos::create([
+            'identidad' => $ingresoData['identidad'],
+            'id_empresa' => $ingresoData['id_empresa'],
+            'fechaIngreso' => $ingresoData['fechaIngreso'],
+            'area' => $ingresoData['area'],
+            'id_puesto' => $ingresoData['id_puesto'],
+            'activo' => 's' // Se marca como activo el nuevo ingreso
+        ]);
+    }
+
+
+    private function insertarIngresosMasivos($datos)
+    {
+        $ingresosCreados = [];
+        $datosRegistroestado = [];
+
+        foreach ($datos as $ingresoData) {
+            $estadoIngreso = $this->validarEstadoIngreso($ingresoData['identidad'], $ingresoData['id_empresa']);
+
+            if ($estadoIngreso === 'Registro nuevo' || $estadoIngreso === 'Recontratado') {
+                DB::beginTransaction();
+                try {
+                    $ingresoCreado = $this->crearOActualizarIngreso($ingresoData);
+                    DB::commit();
+                    $ingresosCreados[] = $ingresoCreado;
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json(['error' => 'Error al guardar los ingresos'], 500);
+                }
+            }
+
+            $datosRegistroestado[] = [
+                'identidad' => $ingresoData['identidad'],
+                'estadoIngreso' => $estadoIngreso,
+                'nombre' => $ingresoData['nombre'] . ' ' . $ingresoData['apellido']
+            ];
+        }
+
+        return [
+            'ingresos' => $ingresosCreados,
+            'estados' => $datosRegistroestado
+        ];
+    }
+
+
+   
+
+
+    public function importarIngresos(Request $request)
+    {
+        $datos = [];
+        $registrosProblematicos = [];
+        $transactionId = null;
+        DB::beginTransaction(); // Iniciar transacción
+        try {
+            
+          //  $datos = $this->processData($request);
+            $datos=$this->processData2($request);
+
+           
+            // O btener ID de la transacción en MySQL
+            $transactionId = DB::select("SELECT CONNECTION_ID() AS connection_id")[0]->connection_id;
+
+            $importedFields = array_keys($datos[0]);
+            $candidato = new Candidatos();
+            $ingresos = new Ingresos();
+    
+            $table_candidate = array_diff(Schema::getColumnListing($candidato->getTable()), ['comentarios', 'id', 'updated_at', 'created_at', 'activo']);
+            $table_input = ['id_empresa', 'fechaIngreso', 'area', 'id_puesto'];
+    
+            $columnHeaders = array_merge($table_input, $table_candidate);
+    
+            // Validar campos insuficientes
+            $indicesConMenosDe13Campos = $this->validarCamposInsuficientes($datos, $columnHeaders);
+            if (count($indicesConMenosDe13Campos) > 0) {
+               
+                return response()->json([
+                    'error' => 'Campos insuficientes',
+                    'indices' => $indicesConMenosDe13Campos,
+                    'tipoError'=>'datos',
+                ], 400);
+            }
+           
+            // Validar formato de fechas
+            list($datos, $registrosconFechamalForma) = $this->validarFormatoFecha($datos);
+           
+            if (count($registrosconFechamalForma) > 0) {
+                return response()->json([
+                    'error' => "Formato de fecha incorrecto en el registro",
+                    'indice' => $registrosconFechamalForma, 
+                    'tipoError'=>'fecha',
+                ], 400);
+            }
+
+            // Guardar inicio de la transacción en el log
+                $logId = DB::table('transactions_logo')->insertGetId([
+                    'identidad' => null,
+                    'tipo_transaccion' => 'inicio',
+                    'estado' => 'en progreso',
+                    'mensaje' => "Inicio de transacción ID: $transactionId",
+                    'created_at' => now()
+                ]);
+            
+            // Insertar candidatos masivamente
+            $candidatosCreados = $this->insertarCandidatosMasivos($datos, $candidato);
+
+            foreach ($candidatosCreados as $candidato) {
+                DB::table('transactions_logo')->insert([
+                    'identidad' => $candidato['identidad'],
+                    'tipo_transaccion' => 'candidato',
+                    'estado' => $candidato['estado'],
+                    'mensaje' => "Candidato procesado en transacción ID: $transactionId",
+                    'created_at' => now()
+                ]);
+            }
+    
+            // Insertar ingresos masivamente
+            $ingresosCreados = $this->insertarIngresosMasivos($datos, $ingresos);
+
+            foreach ($ingresosCreados['ingresos'] as $ingreso) {
+               // dd($ingreso);
+                DB::table('transactions_logo')->insert([
+                    'identidad' => $ingreso->identidad,
+                    'tipo_transaccion' => 'ingreso',
+                    'estado' => 'Ingreso registrado',
+                    'mensaje' => "Ingreso procesado en transacción ID: $transactionId",
+                    'created_at' => now()
+                ]);
+            }
+
+            DB::commit(); // Confirmar la transacción si todo salió bien
+    
+            return response()->json(['candidatos' => $candidatosCreados, 'ingresos' => $ingresosCreados, 'status' => 202]);
+    
+        } catch (Exception $e) {
+            DB::rollBack(); // Revertir la transacción en caso de error
+            $registrosProblematicos[] = ['registro' => $datos, 'error' => $e->getMessage()];
+            $transactionId = DB::select("SELECT CONNECTION_ID() AS connection_id")[0]->connection_id;
+
+            DB::table('transactions_logo')->insert([
+                'identidad' => null,
+                'tipo_transaccion' => 'error',
+                'estado' => 'fallido',
+                'mensaje' => "Error en transacción ID $transactionId: " . $e->getMessage(),
+                'created_at' => now()
+            ]);
+            return response()->json(['error' => $e->getMessage(),'tipoError'=>'exception'], 400);
+        }
+    }
+    
 
 
     /**
@@ -322,7 +737,7 @@ class CandidatosController extends Controller
 
     public function recibirIngresos(Request $request)
     {
-
+        
         $datos = [];
         $registrosIngreso = [];
         $registrosProblematicos = [];
@@ -332,6 +747,7 @@ class CandidatosController extends Controller
         $indicesConMenosDe13Campos = [];
         try{
                 $datos=$this->processData($request);
+
                 $importedFields = array_keys($datos[0]);
                 $candidato = new Candidatos();
                 $ingresos=new Ingresos();
@@ -402,7 +818,7 @@ class CandidatosController extends Controller
                     }
                 }
 
-              dd($datos);
+              
                     
                 if(count($registrosconFechamalForma)>0)
                 {
@@ -669,37 +1085,37 @@ class CandidatosController extends Controller
     }
 
     public function exportarEgresos(Request $request)
-{   
-    // Obtener todos los datos de la solicitud como un arreglo asociativo
-    $data = $request->all();
-    
-    // Verificar si se recibieron datos y extraer las identidades del arreglo
-    if (!empty($data)) {
-        $exportarEgresos = [];
+    {   
+        // Obtener todos los datos de la solicitud como un arreglo asociativo
+        $data = $request->all();
+        
+        // Verificar si se recibieron datos y extraer las identidades del arreglo
+        if (!empty($data)) {
+            $exportarEgresos = [];
 
-        // Extraer las identidades del arreglo
-            foreach($data['egresosNuevos'] as $dt)
+            // Extraer las identidades del arreglo
+                foreach($data['egresosNuevos'] as $dt)
+                {
+                    $egresos=Egresos::select('egresos_ingresos.id',DB::raw("CONCAT(candidatos.nombre, ' ', candidatos.apellido) AS nombre_completo"),'egresos_ingresos.identidad','egresos_ingresos.fechaIngreso')
+                    ->join('candidatos','egresos_ingresos.identidad','candidatos.identidad')
+                    ->where('egresos_ingresos.identidad', $dt)
+                    ->where('candidatos.activo', '=', 'n')
+                    ->first();
+                    $exportarEgresos[]=$egresos;
+                }
+            
+            $bookExporter='egresos.xlsx';
+            if(!is_null($exportarEgresos)|| !empty($exportarEgresos))
             {
-                $egresos=Egresos::select('egresos_ingresos.id',DB::raw("CONCAT(candidatos.nombre, ' ', candidatos.apellido) AS nombre_completo"),'egresos_ingresos.identidad','egresos_ingresos.fechaIngreso')
-                 ->join('candidatos','egresos_ingresos.identidad','candidatos.identidad')
-                ->where('egresos_ingresos.identidad', $dt)
-                ->where('candidatos.activo', '=', 'n')
-                ->first();
-                $exportarEgresos[]=$egresos;
+                return Excel::download(new ExportTemplateOut($exportarEgresos),$bookExporter);
+            }else{
+                return response()->json(['error'=>'error al exportar archivo','status'=>200]);
             }
-         
-        $bookExporter='egresos.xlsx';
-        if(!is_null($exportarEgresos)|| !empty($exportarEgresos))
-        {
-            return Excel::download(new ExportTemplateOut($exportarEgresos),$bookExporter);
-        }else{
-            return response()->json(['error'=>'error al exportar archivo','status'=>200]);
         }
-    }
 
-    // En caso de que no se procese correctamente la solicitud
-    return response()->json(['error' => 'Datos no válidos'], 400);
-}
+        // En caso de que no se procese correctamente la solicitud
+        return response()->json(['error' => 'Datos no válidos'], 400);
+    }
 
 
 /**
@@ -804,50 +1220,7 @@ class CandidatosController extends Controller
     {
         try {
 
-            /*   $validator=Validator::make($request->all(),[
-                   'tiempo'=>[
-                       'required',
-                       function($attribute,$value,$fail){
-                           if($value=='')
-                           {
-                               $fail('El campo '.$attribute. 'no puede ir vacio');
-                           }
-                       }
-                   ],
-                   'comentarios'=>[
-                       'required',
-                       function($attribute,$value,$fail){
-                           if($value=='')
-                           {
-                               $fail('El campo '.$attribute. 'no puede ir vacio');
-                           }
-                       }
-                   ],
-                   'forma_egreso'=>[
-                       'required',
-                       function($attribute,$value,$fail){
-                           if($value=='0')
-                           {
-                               $fail('El campo '.$attribute. 'no puede ir vacio');
-                           }
-                       }
-                   ],
-                   'tipo_egreso'=>[
-                       'required',
-                       function($attribute,$value,$fail){
-                           if($value=='0')
-                           {
-                               $fail('El campo '.$attribute. 'no puede ir vacio');
-                           }
-                       }
-                   ],
-               ]);
-
-               if($validator->fails())
-               {
-                   return redirect()->back()->withErrors($validator)->withInput();
-               }
-               */
+            
             if (!is_null($request)) {
                 $existemismaEmpresa = Egresos::where('identidad', $request->input('identidad'))
                     ->where('id_empresa', $request->input('id_empresa'))
@@ -1090,6 +1463,7 @@ class CandidatosController extends Controller
     }
 
 
+    
     
 
 

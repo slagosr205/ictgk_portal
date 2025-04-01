@@ -398,13 +398,15 @@ if (toastTrigger) {
 }
 
 
-document.addEventListener('submit',function(event){
-    if(event.target.classList.contains('desbloquearRecomendacion'))
+
+
+document.addEventListener('click',function(event){
+    if(event.target.classList.contains('btndesbloqueoRecomendacion'))
     {
         event.preventDefault();
-        
-        var identidadVal=event.target.querySelector('#identidad').value
-        var empresaID=event.target.querySelector('#empresaID').value
+        console.log('prueba')
+        var identidadVal=event.target.getAttribute('data-identidad')
+        var empresaID=event.target.getAttribute('data-empresaID')
         var frmDesbloqueo=new FormData();
         frmDesbloqueo.append('identidad',identidadVal)
         frmDesbloqueo.append('empresa_id',empresaID)
@@ -464,6 +466,8 @@ document.addEventListener('submit',function(event){
        })
     }
 })
+
+
 const botonesDesbloquear = document.querySelectorAll('.btnbloqueo');
 const modalidentidad=document.getElementById('modalidentidad')
 const lockidentidad=document.getElementById('lockidentidad')
@@ -495,160 +499,161 @@ const lockidentidad=document.getElementById('lockidentidad')
 
     /**Capturar el submit para procesar todos los ingresos masivos */
 
-if(document.getElementById('frmimportInputCandidate')!=null)
-    {
-    var archivo_csv=$('#archivo_csv')
-    
-    var importInputCandidate=new Modal('#importInputCandidate')
-    var importacionPersonal=$('#importacionPersonal')
-    $(document).on('submit','#frmimportInputCandidate',function(e){
-        e.preventDefault()
-        var inputCSVimport=$('#archivo_csv')[0].files[0]
-        var formCSV=new FormData();
-        console.log('existe')
-        formCSV.append('archivo_csv',inputCSVimport);
-        $.ajax({
-            url:'/ingresos-masivos',
-            type:'POST',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') // Incluir el token CSRF en los headers si es necesario
-            },
-            data:formCSV,
-            processData: false,
-            contentType: false,
+    if(document.getElementById('frmimportInputCandidate') != null) {
+        var archivo_csv = $('#archivo_csv');
+        var importInputCandidate = new Modal('#importInputCandidate');
+        var importacionPersonal = $('#importacionPersonal');
+        
+        $(document).on('submit', '#frmimportInputCandidate', function(e) {
+            e.preventDefault();
+            var inputCSVimport = $('#archivo_csv')[0].files[0];
+            var formCSV = new FormData();
             
-            success: function(response) {
-                // Manejar la respuesta del servidor
-               
-                if(response.status===202)
-                {
-                     // Construir la tabla en formato HTML
+            console.log('Archivo subido');
+            formCSV.append('archivo_csv', inputCSVimport);
+            
+            $.ajax({
+                url: '/ingresos-masivos',
+                type: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: formCSV,
+                processData: false,
+                contentType: false,
+                
+                success: function(response) {
+                    if (response.status === 202) {
                         var tablaHTML = '<table id="dtEstadoRegistros">' +
+                            '<thead>' +
+                                '<tr>' +
+                                    '<th>Identidad</th>' +
+                                    '<th>Nombre Completo</th>' +
+                                    '<th>Estado Ingreso</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>';
+                        
+                        // Recorriendo el array 'estados' del JSON recibido
+                        $.each(response.ingresos.estados, function(index, ingresos) {
+                            var estadoIngresoIcono = '';
+                            
+                            // Asignando íconos dependiendo del estadoIngreso
+                            switch (ingresos.estadoIngreso) {
+                                case 'Ya existe en la misma empresa':
+                                    estadoIngresoIcono = '<i class="ri-arrow-right-up-fill py-4"></i>';
+                                    break;
+                                case 'Ingreso nuevo':
+                                    estadoIngresoIcono = '<i class="ri-arrow-up-fill py-4"></i>';
+                                    break;
+                                case 'Registro en otra compañia':
+                                    estadoIngresoIcono = '<i class="ri-arrow-right-fill py-4"></i>';
+                                    break;
+                                default:
+                                    estadoIngresoIcono = '';
+                            }
+                
+                            // Generando las filas de la tabla con los datos
+                            tablaHTML += '<tr>' +
+                                '<td>' + ingresos.identidad + '</td>' +
+                                '<td>' + ingresos.nombre + '</td>' +
+                                '<td>' + estadoIngresoIcono + ingresos.estadoIngreso + '</td>' +
+                            '</tr>';
+                        });
+                
+                        tablaHTML += '</tbody></table>';
+                
+                        importInputCandidate.hide();
+                        Swal.fire({
+                            title: 'Estado de Ingresos',
+                            html: tablaHTML,
+                            didOpen: () => {
+                                // Inicializando DataTable en el contenido de la tabla
+                                $('#dtEstadoRegistros').DataTable();
+                            },
+                            width: '80%',
+                            allowOutsideClick: false
+                        });
+                    }
+                },
+                
+                error: function(xhr, status, error) {
+                    var tipoError = xhr.responseJSON.tipoError;
+                    if(tipoError==='exception')
+                    {
+                        Swal.fire(
+                            {
+                                title:'Error en el registro',
+                                text:xhr.responseJSON.error,
+                                icon:'error'
+                            }
+                        )
+                    }else{
+
+
+                    var tablaHTML = '<table id="dtEstadoRegistros" class="display">' +
                         '<thead>' +
                             '<tr>' +
+                                '<th># Linea</th>' +
                                 '<th>Identidad</th>' +
                                 '<th>Nombre</th>' +
-                                '<th>Estado</th>' +
-                                '<th>Estado Ingreso</th>' +
+                                (tipoError === 'datos' ? '<th>Campos Faltantes</th>' : '<th>Observación</th>') +
                             '</tr>' +
                         '</thead>' +
                         '<tbody>';
     
-                // Iterar sobre los datos y agregar filas a la tabla
-               $.each(response.incomeJobs,function(index,ingresos)
-               {
-                var estadoIcono = '';
-                var estadoIngresoIcono = '';
-                switch (ingresos.estado) {
-                    case 'registro nuevo':
-                        estadoIcono = '<i class="ri-user-add-line py-4"></i>';
-                        break;
-                    case 'registro actualizado':
-                        estadoIcono = '<i class="ri-arrow-up-circle-fill py-4"></i>';
-                        break;
-                    case 'existente':
-                        estadoIcono = '<i class="ri-arrow-right-up-fill py-4"></i>';
-                        break;
-                    default:
-                        estadoIcono = '';
-                }
-                switch (ingresos.estadoIngreso) {
-                    case 'Ingreso nuevo':
-                        estadoIngresoIcono = '<i class="ri-arrow-up-fill"></i>';
-                        break;
-                    case 'Registro en otra compañia':
-                        estadoIngresoIcono = '<i class="ri-arrow-right-fill"></i>';
-                        break;
-                    default:
-                        estadoIngresoIcono = '';
-                }
+                    if (tipoError === 'datos') {
+                        // Errores de campos insuficientes
+                        $.each(xhr.responseJSON.indices, function(index, ingreso) {
+                            var camposFaltantes = '';
+                            $.each(ingreso.campos_faltantes, function(key, value) {
+                                camposFaltantes += '<li>' + value + '</li>';
+                            });
+                            camposFaltantes = '<ul>' + camposFaltantes + '</ul>';
     
-                tablaHTML += '<tr>' +
-                '<td>' + ingresos.identidad + '</td>' +
-                '<td>' + ingresos.nombre + '</td>' +
-                '<td>' + estadoIcono + ingresos.estado + '</td>' +
-                '<td>' + estadoIngresoIcono + ingresos.estadoIngreso + '</td>' +
-                '</tr>';
-                
-    
-               })
-                
-                // Cerrar la etiqueta tbody y table
-                tablaHTML += '</tbody></table>';
-                   
-                    importInputCandidate.hide();
-                   Swal.fire({
-                    title:'Estado de Ingresos',
-                    html:tablaHTML,
-                    didOpen:()=>{
-                        $('#dtEstadoRegistros').DataTable()
-                    },
-                    width:'80%',
-                    allowOutsideClick:false
-                   })
-                }
-                
-            },
-            error: function(xhr, status, error) {
-                // Manejar errores de AJAX
-            //   console.error('Error al enviar el archivo:', xhr.responseJSON.indices.campos_faltantes);
-                var tablaHTML = '<table id="dtEstadoRegistros" class="display">' +
-                    '<thead>' +
-                        '<tr>' +
-                            '<th>Identidad</th>' +
-                            '<th>Nombre</th>' +
-                            '<th>Campos Faltantes</th>' +
-                        '</tr>' +
-                    '</thead>' +
-                    '<tbody>';
-                
-                // Iterar sobre los datos y agregar filas a la tabla
-                $.each(xhr.responseJSON.indices, function(index, ingreso) {
-                    var camposFaltantes = '';
-                    $.each(ingreso.campos_faltantes, function(key, value) {
-                        camposFaltantes += '<li>' + value + '</li>';
-                    });
-                    camposFaltantes = '<ul>' + camposFaltantes + '</ul>';
-
-                    tablaHTML += '<tr>' +
-                        '<td>' + ingreso.identidad + '</td>' +
-                        '<td>' + ingreso.nombre + '</td>' +
-                        '<td>' + camposFaltantes + '</td>' +
-                        '</tr>';
-                });
-                
-                // Cerrar la etiqueta tbody y table
-                tablaHTML += '</tbody></table>';
-
-                // Ocultar el formulario (si es necesario)
-                $('#frmimportInputCandidate').hide();
-                
-                // Mostrar alerta con la tabla
-                Swal.fire({
-                    title: 'Campos Faltantes',
-                    html: tablaHTML,
-                    didOpen: () => {
-                        $('#dtEstadoRegistros').DataTable();
-                    },
-                    width: '80%',
-                    allowOutsideClick: false
-                }).then((isOk)=>{
-                    if(isOk)
-                    {
-                        location.reload();
+                            tablaHTML += '<tr>' +
+                                '<td>' + ingreso.LineNumber + '</td>' +
+                                '<td>' + ingreso.identidad + '</td>' +
+                                '<td>' + ingreso.nombre + '</td>' +
+                                '<td>' + camposFaltantes + '</td>' +
+                            '</tr>';
+                        });
+                    } else if (tipoError === 'fecha') {
+                        // Errores de formato de fecha incorrecto
+                        $.each(xhr.responseJSON.indice, function(index, registro) {
+                            tablaHTML += '<tr>' +
+                            '<td>' + registro.LineNumber + '</td>' +
+                                '<td>' + registro.identidad + '</td>' +
+                                '<td>' + registro.nombre + '</td>' +
+                                '<td>' + registro.mensaje + '</td>' +
+                            '</tr>';
+                        });
                     }
-                });
-               /* Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Hubo un problema al procesar la solicitud. Por favor, verifica el archivo e inténtalo de nuevo.'
-                });*/
-            }
-        })
-    })
-        
+
+                    
     
-        
+                    tablaHTML += '</tbody></table>';
+    
+                    $('#frmimportInputCandidate').hide();
+    
+                    Swal.fire({
+                        title: tipoError === 'datos' ? 'Campos Faltantes' : 'Formato de Fecha Incorrecto',
+                        html: tablaHTML,
+                        didOpen: () => {
+                            $('#dtEstadoRegistros').DataTable();
+                        },
+                        width: '80%',
+                        allowOutsideClick: false
+                    }).then((isOk) => {
+                        if (isOk) {
+                            location.reload();
+                        }
+                    });
+
+                    }//final else
+                }
+            });
+        });
     }
     
 
@@ -731,6 +736,8 @@ if(selectOutput!=null)
     
 }
 
+if(document.getElementById("importOut"))
+{
 var modalimportOut=new Modal('#importOut')
 $(document).on('submit','#frmImportOut',function(e){
     e.preventDefault()
@@ -776,7 +783,7 @@ $(document).on('submit','#frmImportOut',function(e){
         },
     })
 })
-
+}
 
 
 

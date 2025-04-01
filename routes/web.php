@@ -19,8 +19,10 @@ use App\Exports\ExportTemplate;
 use App\Exports\ExportTemplateCandidate;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\BloqueoController;
 use App\Models\Empresas;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 /*
 |--------------------------------------------------------------------------
@@ -113,7 +115,7 @@ Route::post('/actualizacion-ficha',[App\Http\Controllers\CandidatosController::c
  * 2. Si existen en la tabla candidato que solo se agreguen en la tabla de ingresos
 */
 
-Route::post('/ingresos-masivos',[App\Http\Controllers\CandidatosController::class,'recibirIngresos'])->name('cargaIng');
+Route::post('/ingresos-masivos',[App\Http\Controllers\CandidatosController::class,'importarIngresos'])->name('cargaIng');
 Route::post('/ingresos',[App\Http\Controllers\CandidatosController::class,'hacerIngreso'])->name('hacerIgresos');
 Route::post('/egresos',[App\Http\Controllers\CandidatosController::class,'hacerEgreso'])->name('hacerEgresos');
 Route::post('/ingresos-nuevos',[App\Http\Controllers\CandidatosController::class,'insertarCandidato'])->name('insertarCandidato');
@@ -161,6 +163,7 @@ Route::post('/solicitud-desbloqueo-recomendacion',[App\Http\Controllers\Candidat
 Route::post('/desbloquear-recomendacion',[App\Http\Controllers\CandidatosController::class,'desbloquearRecomendacion'])->name('desbloqueoRecomendacion');
 
 Route::get('/consulta-puesto/{id}',[App\Http\Controllers\PuestosController::class,'dataPuestos'])->name('consultaPuesto');
+Route::get('/consultaPuestosxEmpresas/{idEmpresas}',[App\Http\Controllers\PuestosController::class,'puestosxEmpresas'])->name('consultaPuestosxEmpresas');
 Route::post('/insert-positions',[App\Http\Controllers\PuestosController::class,'create'])->name('insertPositions');
 Route::post('/update-positions',[App\Http\Controllers\PuestosController::class,'updatePosition'])->name('updatePosition');
 
@@ -174,8 +177,12 @@ Route::get('/egresosxempresas',[App\Http\Controllers\InformesController::class,'
 Route::get('/edadesxestado',[App\Http\Controllers\InformesController::class,'GetDataState'])->name('edadesxestado');
 Route::get('/egresosxingresos',[App\Http\Controllers\InformesController::class,'IngresosxEgresos'])->name('egresosxingresos');
 Route::get('/renunciasxGenero',[App\Http\Controllers\InformesController::class,'RenunciasxGenero'])->name('renunciasxGenero');
+Route::get('/monitor-sesion',[App\Http\Controllers\InformesController::class,'GetLastSessionUser'])->name('monitorSesiones');
+
+Route::post('/bloqueo-parqueo',[BloqueoController::class,'recibirBloqueos'])->name('blockPark');
 });
  
+
    
 /*use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
