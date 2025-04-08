@@ -63,16 +63,17 @@
                 <p id="{{session('icon')}}" hidden > {{session('mensaje')}}</p>   
         @endswitch
 
-        <div class="alert alert-success">
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
             <strong>{{session('mensaje')}}</strong>
-        </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div> 
         
     @endif
-    @if (session('msjIngreso'))
+   {{-- @if (session('msjIngreso'))
         <div class="alert alert-success">
             <strong>{{session('msjIngreso')}}</strong>
         </div>
-    @endif
+    @endif --}}
 
     @if (session('successmail'))
         <div class="alert alert-success">

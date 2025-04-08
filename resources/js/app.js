@@ -430,6 +430,10 @@ document.addEventListener('click',function(event){
                     })
 
                     const tdElement = document.querySelector('.cambiarestado');
+                    const modalElement = document.getElementById('modaldebloqueoRecomendacion');
+
+                    
+
 
                     if (tdElement && tdElement.querySelector('button')) {
                         // Obtener el botón dentro del <td>
@@ -468,7 +472,7 @@ document.addEventListener('click',function(event){
 })
 
 
-const botonesDesbloquear = document.querySelectorAll('.btnbloqueo');
+/*const botonesDesbloquear = document.querySelectorAll('.btnbloqueo');
 const modalidentidad=document.getElementById('modalidentidad')
 const lockidentidad=document.getElementById('lockidentidad')
     // Iterar sobre cada botón y agregar un evento de clic a cada uno
@@ -490,9 +494,9 @@ const lockidentidad=document.getElementById('lockidentidad')
 
         
 
-    });
+    });*/
 
-    var tooltipMsjRegNuevosCandidatos=$('.mensajeregistros')
+   /* var tooltipMsjRegNuevosCandidatos=$('.mensajeregistros')
     tooltipMsjRegNuevosCandidatos.each(function(){
         var tootltip=new Tooltip(this)
     })
