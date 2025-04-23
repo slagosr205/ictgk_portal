@@ -69,11 +69,11 @@
         </div> 
         
     @endif
-   {{-- @if (session('msjIngreso'))
+   @if (session('msjIngreso'))
         <div class="alert alert-success">
             <strong>{{session('msjIngreso')}}</strong>
         </div>
-    @endif --}}
+    @endif
 
     @if (session('successmail'))
         <div class="alert alert-success">

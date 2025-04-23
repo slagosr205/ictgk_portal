@@ -1,3 +1,7 @@
+<!-- En este modal , contiene un formulario para
+cargar un archivo CSV para bloquear en el parque. El modal incluye un título “Bloqueo Masivo de Candidatos”
+(Bloqueo masivo de candidatos), un campo de entrada de archivo para seleccionar un archivo CSV y un botón de enviar
+para enviar la información -->
 <!-- Modal -->
 <div class="modal fade" id="importBlockModal" tabindex="-1" aria-labelledby="importBlockLabel" aria-hidden="true">
   <div class="modal-dialog">

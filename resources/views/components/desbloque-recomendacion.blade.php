@@ -1,3 +1,5 @@
+<!-- The code you provided is creating a modal in HTML. Modals are used to display content or forms on
+top of the current page without navigating away from it. In this specific modal: -->
 <!-- Modal -->
 <div class="modal fade" id="modaldebloqueoRecomendacion" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
     <div class="modal-dialog">
