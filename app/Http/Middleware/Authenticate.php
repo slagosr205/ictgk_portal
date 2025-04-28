@@ -21,7 +21,7 @@ class Authenticate extends Middleware
 
     public function handle($request, Closure $next, ...$guards)
     {
-       
+      
         if ($this->authenticate($request, $guards) === 'authentication_required') {
             // La sesión del usuario ha expirado
             return redirect()->guest(route('login'));

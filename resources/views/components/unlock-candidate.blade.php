@@ -7,7 +7,7 @@
         </div>
         <div class="modal-body">
           <div class="row">
-            <form action="{{route('unlockCandidate')}}" method="post">
+            <form action="{{route('unlockCandidate')}}" method="POST">
               @csrf
               {{--
                 1. Cuando se haga click en el boton desbloquear en el archivo app.js asignara el valor de la identidad del registro

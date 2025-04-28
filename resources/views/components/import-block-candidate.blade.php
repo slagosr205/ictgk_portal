@@ -13,7 +13,7 @@ para enviar la información -->
       <div class="modal-body">
        <form action="{{route('blockPark')}}" method="post" enctype="multipart/form-data">
             @csrf
-            <input type="file" name="archivo_csv" id="archivo_csv" accept=".csv" class="form-control border" >
+            <input type="file" name="archivo_csv" id="archivo_csv" accept=".csv" class="form-control border" required >
              <button type="submit" class="btn btn-success mt-2">Enviar informacion</button>
        </form>
       </div>
@@ -22,4 +22,6 @@ para enviar la información -->
       </div>
     </div>
   </div>
+
+ 
 </div>

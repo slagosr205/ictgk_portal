@@ -1345,7 +1345,7 @@ private function formatUserDate($userDate)
                 'prohibirIngreso' => 'required|string',
                 'ComenProhibir' => 'required|string',
             ]);
-
+          
             if (!is_null($request)) {
                 $ultimoEgreso = Egresos::where('identidad', $request->input('identidad'))
                     ->where('activo', '=', 'n')
@@ -1387,7 +1387,7 @@ private function formatUserDate($userDate)
                         $candidato->save();
                     }
 
-                    return redirect()->back();
+                    return redirect()->back()->with('success', 'Candidato desbloqueado con éxito');
                 } else {
                     return response()->json(['mensaje' => 'no se encontro registro']);
                 }

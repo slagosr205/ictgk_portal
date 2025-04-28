@@ -18,6 +18,7 @@ class Candidatos extends Model
         'generoM_F',
         'fecha_nacimiento',
         'activo',
+        'comentarios',
     ];
 
 

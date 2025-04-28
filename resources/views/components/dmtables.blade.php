@@ -258,6 +258,60 @@
   </div>
 
 
+
   <x-unlock-candidate />
   <x-lock-candidate />
+
+  
+  @if (session('response'))
+  <div class="card mt-3" id="alerts-container">
+      <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Notificaciones</strong>
+          <button type="button" class="btn-close" aria-label="Cerrar" onclick="document.getElementById('alerts-container').remove();">Cerrar</button>
+      </div>
+      <div class="card-body p-0">
+          <table class="table table-hover table-bordered mb-0">
+              <thead class="table-light">
+                  <tr>
+                      <th style="width: 50px;">Icono</th>
+                      <th style="width: 50px;">Candidato</th>
+                      <th>Mensaje</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  @foreach (session('response')['response'] as $resp)
+                      <tr>
+                          <td class="text-center">
+                              @if (($resp['status'] ?? 'info') === 'success')
+                                  <i class="ri-check-fill text-success"></i>
+                              @elseif (($resp['status'] ?? 'info') === 'error' || ($resp['status'] ?? 'info') === 'danger')
+                                  <i class="ri-thumb-down-fill text-danger"></i>
+                              @elseif (($resp['status'] ?? 'info') === 'warning')
+                                  <i class="ri-information-off-fill text-warning"></i>
+                              @else
+                                <i class="ri-information-fill text-warning"></i>
+                              @endif
+                          </td>
+                          <td>
+                              @if (isset($resp['nombre']))
+                                  {{ $resp['nombre'].' '.$resp['apellido'] }}
+                              @else
+                                  {{ 'Sin identidad.' }}
+                              @endif 
+                          </td>
+                          <td>{{ $resp['message'] ?? 'Sin mensaje.' }}</td>
+                      </tr>
+                  @endforeach
+              </tbody>
+          </table>
+      </div>
+  </div>
+  @endif
+  
+
+
+
+  
 </div>
+
+

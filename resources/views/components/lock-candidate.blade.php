@@ -26,7 +26,7 @@
                 <textarea class="form-control" name="ComenProhibir" id="ComenProhibir" cols="30" rows="10"></textarea>
               </div>
               <div class="col-md-6">
-                <button type="submit" class="btn btn-primary mt-2">Grabar</button>
+                <button type="submit" class="btn btn-primary mt-2">Bloquear</button>
               </div>
               
             </form>
@@ -39,3 +39,4 @@
       </div>
     </div>
   </div>
+

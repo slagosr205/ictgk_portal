@@ -179,10 +179,10 @@ Route::get('/egresosxingresos',[App\Http\Controllers\InformesController::class,'
 Route::get('/renunciasxGenero',[App\Http\Controllers\InformesController::class,'RenunciasxGenero'])->name('renunciasxGenero');
 Route::get('/monitor-sesion',[App\Http\Controllers\InformesController::class,'GetLastSessionUser'])->name('monitorSesiones');
 
-Route::post('/bloqueo-parqueo',[BloqueoController::class,'recibirBloqueos'])->name('blockPark');
+
 });
  
-
+Route::post('/bloqueo-parqueo',[BloqueoController::class,'recibirBloqueos'])->name('blockPark');
    
 /*use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;

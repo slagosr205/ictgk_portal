@@ -18,7 +18,7 @@ class CheckSessionExpiration
     {
         $maxSessionLifetime = config('session.lifetime') * 60; // Duración de la sesión en segundos
         $lastActivity = Session::get('last_activity');
-
+      
         if (!empty($lastActivity) && (time() - $lastActivity > $maxSessionLifetime)) {
             // La sesión ha expirado
             Auth::logout(); // Cerrar sesión por seguridad
