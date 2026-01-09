@@ -14,6 +14,7 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
+        "@inertiajs/react": "2.0",
         "bootstrap-icons": "^1.11.3",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",

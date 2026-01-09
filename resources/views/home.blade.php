@@ -22,7 +22,7 @@
                 <!-- Button trigger modal -->
                @foreach ($perfilUsers as $pu)
                    @if ($pu->ingreso===1)
-                        <button type="button" class="btn btn-info btn-block mb-2" data-bs-toggle="modal" data-bs-target="#importInputCandidate">
+                        <button type="button" class="btn btn-info btn-block mb-2 mx-2" data-bs-toggle="modal" data-bs-target="#importInputCandidate">
                             Importacion de Ingresos
                         </button>
                    @endif

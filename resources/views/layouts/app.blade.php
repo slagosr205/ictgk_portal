@@ -17,6 +17,7 @@
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
   />
+   
     <!-- Scripts -->
     @vite([
                 
@@ -44,11 +45,12 @@
 </head>
 @guest
     <body class="login">
+
     @else
     <body>
     
 @endguest
-
+        
        
         <x-menu-bar :logos="1"/>
         <main class="py-4 container-fluid">
@@ -66,6 +68,7 @@
         </main>
     </div>
     <x-historico />
+      
 </body>
 </html>
     
