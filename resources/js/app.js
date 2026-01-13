@@ -1,4 +1,4 @@
-import './bootstrap';
+import * as bootstrap from './bootstrap';
 
 import jQuery, { data } from 'jquery';
 import DataTable from 'datatables.net-bs5';
@@ -9,6 +9,8 @@ import 'remixicon/fonts/remixicon.css';
 import datepicker from 'js-datepicker';
 import { Modal, Toast, Tooltip } from 'bootstrap';
 import flatpickr from 'flatpickr';
+
+
 window.$ = jQuery;
 
 window.jQuery = jQuery
@@ -36,47 +38,8 @@ if(document.getElementById('mensaje')){
       });
 }
 
-/*if(document.getElementById('mensajeerror')){
-    let mensajeerror=document.getElementById('mensajeerror')
-    Swal.fire({
-        title: "Ejecutado",
-        text: mensajeerror.innerHTML,
-        html:`
-        <table>
-          <thead>
-            <tr>
-              <th>Columna 1</th>
-              <th>Columna 2</th>
-              <th>Columna 3</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Dato 1</td>
-              <td>Dato 2</td>
-              <td>Dato 3</td>
-            </tr>
-            <tr>
-              <td>Dato 4</td>
-              <td>Dato 5</td>
-              <td>Dato 6</td>
-            </tr>
-            <!-- Puedes agregar más filas según tus datos -->
-          </tbody>
-        </table>
-      `,
-        icon: "warning"
-      });
-}*/
 
 
-
-/*ClassicEditor
-            .create( document.querySelector( '#comentarios' ) )
-            .catch( error => {
-            console.error( error );
-            } );
-*/
 if(document.getElementById('error')){
     let error=document.getElementById('error')
     Swal.fire({
@@ -109,32 +72,14 @@ if(document.getElementById('error')){
       return false;
   });
 
-  //obtener menu
- /* fetch("/generar-menu")
-  .then(response=>response.json())
-.then(data=>{
-    var areamenu=document.getElementById("menudinamico")
-    /*for(let i=0;i<data.menu.length;i++){
-        areamenu.innerHTML+='<a href="#" class="nav-item nav-link">'+data.menu[i].name+'</a>';
-    }*/
-    
-//})
+
 
 var btnshowElementImport=document.getElementById('showElementImport')
 var elementImport=document.getElementsByClassName('d-none')
-/*btnshowElementImport.addEventListener("click",function(e){
-   if(elementImport){
-    elementImport[0].classList.remove('d-none')
-   }else{
-    elementImport[0].classList.addClass('d-none')
-   }
-})*/
+
 
 var cardInfoID=document.getElementsByClassName('card2');
 
-/*for(let i=0;i<cardInfoID.length;i++){
-    cardInfoID[i]
-}*/
 
 $('.card2').click(function(){
     var idElemento = $(this).attr('id');
@@ -154,113 +99,297 @@ $('.card2').click(function(){
 })
 
 
+/**
+ * Valida formato de DNI/Identidad
+ */
+const validarDNI = (dni) => {
+    if (!dni || dni.trim() === '') {
+        Swal.fire({
+            title: 'Error de validación',
+            text: 'Por favor ingrese un DNI válido',
+            icon: 'warning',
+            confirmButtonText: 'Aceptar'
+        });
+        return false;
+    }
+    return true;
+};
 
 
+/**
+ * Muestra un loader mientras se carga la información
+ */
+const mostrarLoader = (elemento) => {
+    elemento.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-3">Buscando información...</p>
+        </div>
+    `;
+};
 
+/**
+ * Inicializa DataTable de forma segura
+ */
+let dataTableInstance = null;
+const inicializarDataTable = () => {
+    // Destruir instancia previa si existe
+    if (dataTableInstance) {
+        try {
+            dataTableInstance.destroy();
+        } catch (error) {
+            console.warn('Error al destruir DataTable:', error);
+        }
+    }
+    
+    // Crear nueva instancia
+    const tabla = document.getElementById('tbhistoricoempresa');
+    if (tabla) {
+        dataTableInstance = new DataTable('#tbhistoricoempresa', {
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json'
+            },
+            responsive: true,
+            order: [[3, 'desc']] // Ordenar por fecha de ingreso descendente
+        });
+    }
+};
 
-if(document.getElementById('btndni')!==null){
-var btnDNI=document.getElementById('btndni')
-
-btnDNI.addEventListener('click',function(e){
-    e.preventDefault();
-    var dni=document.getElementById('dni')
-    var fichapersonal=document.getElementById('fichapersonal');
-
-    $.ajax({
-        url:'/infopersonal/'+dni.value,
-        type:'GET',
-
-        //data:{identidad:idElemento},
-        success:function(res){
-            console.log(res);
-            if(res.code!=400){
-                
-                fichapersonal.innerHTML=res;
-                    btnupdate=document.querySelectorAll('.btnupdate')
-                    var tbhistoricoempresa=new DataTable('#tbhistoricoempresa')
-                    btnupdate.forEach(function(button) {
-                        button.addEventListener('click', function() {
-                            // Obtener el ID del botón clicado
-                            var telefono=document.getElementById('telefono')
-                            var correo=document.getElementById('correo')
-                            var direccion=document.getElementById('direccion')
-                            var id = this.id;
-                            ActualizaFicha(correo.value,telefono.value,direccion.value,id) 
-                        });
-                    });
-                
-            }else{
-                Swal.fire({
-                    title:res.response,
-                    icon:'info',
-                    showCancelButton:true,
-                    confirmButtonText:'Desea agregar el registro?',
-                }).then((result)=>{
-                    if(result.isConfirmed){
-                       // fichapersonal.innerHTML='<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerCandidate" >Crear nuevo registro</button>'
-                        var modal=new Modal('#registerCandidate')
-                        modal.show()
-                    }
-                })
+/**
+ * Configura los event listeners para botones de actualización
+ */
+const configurarBotonesActualizacion = () => {
+    const btnUpdate = document.querySelectorAll('.btnupdate');
+    
+    btnUpdate.forEach(button => {
+        // Remover listeners previos para evitar duplicados
+        const newButton = button.cloneNode(true);
+        button.parentNode.replaceChild(newButton, button);
+        
+        newButton.addEventListener('click', function() {
+            const telefono = document.getElementById('telefono');
+            const correo = document.getElementById('correo');
+            const direccion = document.getElementById('direccion');
+            
+            if (!telefono || !correo || !direccion) {
+                console.error('Elementos del formulario no encontrados');
+                return;
             }
             
+            const id = this.id;
+            ActualizaFicha(
+                correo.value.trim(),
+                telefono.value.trim(),
+                direccion.value.trim(),
+                id
+            );
+        });
+    });
+};
+
+/**
+ * Muestra modal para crear nuevo candidato
+ */
+const mostrarModalNuevoCandidato = () => {
+    const modalElement = document.getElementById('registerCandidate');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal #registerCandidate no encontrado');
+    }
+};
+
+// ============================================
+// FUNCIÓN PRINCIPAL DE BÚSQUEDA
+// ============================================
+
+/**
+ * Busca información personal por DNI
+ * @param {string} dni - Número de identidad a buscar
+ */
+const buscarInformacionPersonal = async (dni) => {
+    // Validar DNI
+    if (!validarDNI(dni)) {
+        return;
+    }
+    
+    const fichapersonal = document.getElementById('fichapersonal');
+    if (!fichapersonal) {
+        console.error('Elemento #fichapersonal no encontrado');
+        return;
+    }
+    
+    // Mostrar loader
+    mostrarLoader(fichapersonal);
+    
+    try {
+        // Realizar petición
+        const response = await fetch(`/infopersonal/${dni.trim()}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+            }
+        });
+        
+        // Validar respuesta HTTP
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-    })
-
-})
-
-}
-
-if(document.getElementById('dni')!==null){
-var dni=document.getElementById('dni');
-
-dni.addEventListener('keypress',function(e){
-    var id=e.target.value
-    
-    if(e.key=='Enter')
-    {
-        $.ajax({
-            url:'/infopersonal/'+id,
-            type:'GET',
-            //data:{identidad:idElemento},
-            success:function(res){
-                if(res.code!=400){
-                    fichapersonal.innerHTML=res;
-                    btnupdate=document.querySelectorAll('.btnupdate')
-                    var tbhistoricoempresa=new DataTable('#tbhistoricoempresa')
-                    btnupdate.forEach(function(button) {
-                        button.addEventListener('click', function() {
-                            // Obtener el ID del botón clicado
-                            var telefono=document.getElementById('telefono')
-                            var correo=document.getElementById('correo')
-                            var direccion=document.getElementById('direccion')
-                            var id = this.id;
-                            ActualizaFicha(correo.value,telefono.value,direccion.value,id) 
-                        });
-                    });
-                
-                  
-                }else{
-                    Swal.fire({
-                        title:res.response,
-                        icon:'info',
-                        showCancelButton:true,
-                        confirmButtonText:'Desea agregar el registro?',
-                    }).then((result)=>{
-                        if(result.isConfirmed){
-                           // fichapersonal.innerHTML='<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#registerCandidate" >Crear nuevo registro</button>'
-                            var modal=new Modal('#registerCandidate')
-                            modal.show()
-                        }
-                    })
-                }
-                
+        // Intentar parsear como JSON primero
+        const contentType = response.headers.get('content-type');
+        let data;
+        
+        if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+            
+            // Caso: No se encontró información
+            if (data.code === 404 || data.code === 400) {
+                await manejarCandidatoNoEncontrado(data.response || 'No se encontró información');
+                return;
             }
-        })
+        } else {
+            // Es HTML directo
+            data = await response.text();
+        }
+        
+        // Renderizar información encontrada
+        fichapersonal.innerHTML = data;
+        
+        // Inicializar componentes
+        await inicializarComponentes();
+        
+        // Notificación de éxito
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Información cargada correctamente',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+        
+    } catch (error) {
+        console.error('Error al buscar información:', error);
+        
+        fichapersonal.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="ri-error-warning-line me-2"></i>
+                <strong>Error:</strong> No se pudo cargar la información. 
+                Por favor, intente nuevamente.
+            </div>
+        `;
+        
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+        });
     }
-})
-}
+};
+
+/**
+ * Inicializa todos los componentes después de cargar la información
+ */
+const inicializarComponentes = async () => {
+    // Esperar un tick para que el DOM se actualice
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Inicializar DataTable
+    inicializarDataTable();
+    
+    // Configurar botones de actualización
+    configurarBotonesActualizacion();
+    
+    // Inicializar tooltips si existen
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip (tooltipTriggerEl));
+};
+
+/**
+ * Maneja el caso cuando no se encuentra un candidato
+ */
+const manejarCandidatoNoEncontrado = async (mensaje) => {
+    const result = await Swal.fire({
+        title: mensaje || 'Candidato no encontrado',
+        text: '¿Desea agregar un nuevo registro?',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, crear registro',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d'
+    });
+    
+    if (result.isConfirmed) {
+        mostrarModalNuevoCandidato();
+    }
+};
+
+
+// ============================================
+// EVENT LISTENERS
+// ============================================
+
+/**
+ * Inicializar todo cuando el DOM esté listo
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Event listener para botón de búsqueda
+    const btnDNI = document.getElementById('btndni');
+    if (btnDNI) {
+        btnDNI.addEventListener('click', (e) => {
+            e.preventDefault();
+            const dniInput = document.getElementById('dni');
+            if (dniInput) {
+                buscarInformacionPersonal(dniInput.value);
+            }
+        });
+    }
+    
+    // Event listener para Enter en input DNI
+    const dniInput = document.getElementById('dni');
+    if (dniInput) {
+        dniInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarInformacionPersonal(e.target.value);
+            }
+        });
+        
+        // Validación en tiempo real (opcional)
+        dniInput.addEventListener('input', (e) => {
+            // Remover caracteres no numéricos excepto guiones
+            e.target.value = e.target.value.replace(/[^\d-]/g, '');
+        });
+    }
+});
+
+
+
+// ============================================
+// LIMPIEZA AL SALIR (Prevenir memory leaks)
+// ============================================
+window.addEventListener('beforeunload', () => {
+    if (dataTableInstance) {
+        try {
+            dataTableInstance.destroy();
+        } catch (error) {
+            console.warn('Error al limpiar DataTable:', error);
+        }
+    }
+});
+
+
+
+
 //cuando se dispare el evento, se ejecutar la actualizacion del registro
 
     // Obtener todos los elementos con la clase "btnupdate"
@@ -496,10 +625,7 @@ const lockidentidad=document.getElementById('lockidentidad')
 
     });
 
-   /* var tooltipMsjRegNuevosCandidatos=$('.mensajeregistros')
-    tooltipMsjRegNuevosCandidatos.each(function(){
-        var tootltip=new Tooltip(this)
-    })
+ 
 
     /**Capturar el submit para procesar todos los ingresos masivos */
 

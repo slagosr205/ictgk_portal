@@ -178,7 +178,7 @@ Route::get('/edadesxestado',[App\Http\Controllers\InformesController::class,'Get
 Route::get('/egresosxingresos',[App\Http\Controllers\InformesController::class,'IngresosxEgresos'])->name('egresosxingresos');
 Route::get('/renunciasxGenero',[App\Http\Controllers\InformesController::class,'RenunciasxGenero'])->name('renunciasxGenero');
 Route::get('/monitor-sesion',[App\Http\Controllers\InformesController::class,'GetLastSessionUser'])->name('monitorSesiones');
-
+Route::get('/consulting-user',[App\Http\Controllers\HomeController::class,'cargarDatosUsuario'])->name('datosUsuario');
 
 });
  
