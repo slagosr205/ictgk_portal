@@ -116,15 +116,209 @@ sequenceDiagram
 
 ---
 
-## 6. Build y ejecución (alto nivel)
-- **Backend**: `php artisan serve` (o Sail/Docker si se configura).
-- **Frontend**: `npm install` + `npm run dev` (Vite).
+## 6. Guía de instalación (local)
+1. Clonar el repositorio.
+2. Instalar dependencias de PHP: `composer install`.
+3. Instalar dependencias de frontend: `npm install`.
+4. Copiar el archivo de entorno: `cp .env.example .env`.
+5. Generar la clave de la app: `php artisan key:generate`.
+6. Configurar la base de datos en `.env` (DB_HOST, DB_DATABASE, DB_USERNAME, DB_PASSWORD).
+7. Ejecutar migraciones: `php artisan migrate`.
+8. En desarrollo, levantar el frontend con Vite: `npm run dev`.
 
 ---
 
-## 7. Consideraciones técnicas
+## 7. Creación del ambiente de desarrollo con XAMPP
+1. Instalar XAMPP con PHP **8.1+** y MySQL.
+2. Colocar el proyecto dentro de `htdocs` (por ejemplo `C:\\xampp\\htdocs\\ictgk_portal`).
+3. Iniciar **Apache** y **MySQL** desde el panel de XAMPP.
+4. Crear la base de datos desde phpMyAdmin.
+5. Configurar `.env` con los valores locales (ejemplo típico):
+   - `DB_HOST=127.0.0.1`
+   - `DB_PORT=3306`
+   - `DB_USERNAME=root`
+   - `DB_PASSWORD=` (vacío, según configuración de XAMPP)
+6. Ejecutar en terminal (usando el PHP de XAMPP):
+   - `composer install`
+   - `php artisan key:generate`
+   - `php artisan migrate`
+7. Levantar la app:
+   - Opción A: `php artisan serve` y abrir `http://127.0.0.1:8000`.
+   - Opción B: crear un VirtualHost apuntando a `public/`.
+8. Para frontend en caliente: `npm run dev`.
+
+---
+
+## 8. Instalación en un servidor nuevo (producción)
+1. Requisitos: PHP **8.1+**, Composer, Node.js/NPM, servidor web (Apache/Nginx) y base de datos.
+2. Clonar o copiar el código en el servidor (por ejemplo `/var/www/ictgk_portal`).
+3. Instalar dependencias de backend en modo producción:
+   - `composer install --no-dev --optimize-autoloader`
+4. Instalar dependencias de frontend y compilar:
+   - `npm install`
+   - `npm run build`
+5. Configurar `.env` con credenciales reales y URL de la aplicación.
+6. Ejecutar migraciones: `php artisan migrate --force`.
+7. Generar el enlace de almacenamiento: `php artisan storage:link`.
+8. Cachear configuración y rutas:
+   - `php artisan config:cache`
+   - `php artisan route:cache`
+9. Dar permisos a `storage/` y `bootstrap/cache/` para el usuario del servidor web.
+10. Apuntar el DocumentRoot del servidor a `public/`.
+
+---
+
+## 9. Migraciones (cómo se hacen y se ejecutan)
+### 9.1 Crear una migración
+```bash
+php artisan make:migration create_nombre_tabla_table
+```
+
+### 9.2 Ejecutar migraciones
+```bash
+php artisan migrate
+```
+
+### 9.3 Revertir o refrescar
+```bash
+php artisan migrate:rollback
+php artisan migrate:refresh
+```
+
+### 9.4 Ver estado de migraciones
+```bash
+php artisan migrate:status
+```
+
+---
+
+## 10. Diccionario de campos (base de datos)
+> Fuente: migraciones en `database/migrations/`.
+
+### 10.1 Tabla `users`
+- `id` (PK)
+- `name`
+- `email` (único)
+- `email_verified_at` (nullable)
+- `phone` (nullable)
+- `location` (nullable)
+- `about` (nullable)
+- `password`
+- `remember_token`
+- `created_at`, `updated_at`
+
+### 10.2 Tabla `password_reset_tokens`
+- `email` (PK)
+- `token`
+- `created_at` (nullable)
+
+### 10.3 Tabla `password_resets` (legacy)
+- `email` (index)
+- `token`
+- `created_at` (nullable)
+
+### 10.4 Tabla `failed_jobs`
+- `id` (PK)
+- `uuid` (único)
+- `connection`
+- `queue`
+- `payload`
+- `exception`
+- `failed_at`
+
+### 10.5 Tabla `personal_access_tokens`
+- `id` (PK)
+- `tokenable_type`, `tokenable_id` (morphs)
+- `name`
+- `token` (único)
+- `abilities` (nullable)
+- `last_used_at` (nullable)
+- `expires_at` (nullable)
+- `created_at`, `updated_at`
+
+### 10.6 Tablas de permisos (Spatie)
+Configuradas en `config/permission.php`:
+- `roles`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
+- `permissions`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
+- `model_has_permissions`: `permission_id`, `model_type`, `model_id`
+- `model_has_roles`: `role_id`, `model_type`, `model_id`
+- `role_has_permissions`: `permission_id`, `role_id`
+> Si `teams` se habilita en la configuración, se agrega `team_id` en tablas de pivote y `roles`.
+
+### 10.7 Tabla `candidatos`
+- `id` (PK)
+- `identidad` (único)
+- `nombre`
+- `apellido`
+- `telefono`
+- `correo`
+- `direccion`
+- `generoM_F` (char 1)
+- `fecha_nacimiento`
+- `created_at`, `updated_at`
+
+### 10.8 Tabla `egresos_ingresos`
+- `id` (PK)
+- `identidad`
+- `id_empresa`
+- `fechaIngreso`
+- `area`
+- `id_puesto`
+- `activo` (char 1)
+- `forma_egreso`
+- `Comentario`
+- `recomendado` (char 1)
+- `recontrataria` (char 1)
+- `prohibirIngreso` (char 1)
+- `ComenProhibir`
+- `created_at`, `updated_at`
+
+### 10.9 Tabla `empresas`
+- `id` (PK)
+- `nombre`
+- `direccion`
+- `telefonos`
+- `contacto`
+- `pin`
+- `puesto`
+- `correo`
+- `estado` (char 1)
+- `logo`
+- `created_at`, `updated_at`
+
+### 10.10 Tabla `perfiles`
+- `id` (PK)
+- `perfilesdescrip`
+- `ingreso` (tinyInteger)
+- `egreso` (tinyInteger)
+- `requisiciones` (tinyInteger)
+- `calendarioentrevistas` (tinyInteger)
+- `usuariosdb` (tinyInteger)
+- `created_at`, `updated_at`
+
+### 10.11 Tabla `departamentos`
+- `id` (PK)
+- `nombredepartamento`
+- `empresa_id`
+- `created_at`, `updated_at`
+
+### 10.12 Tabla `puestos`
+- `id` (PK)
+- `nombrepuesto`
+- `departamento_id`
+- `created_at`, `updated_at`
+
+### 10.13 Tabla `event_logs`
+- `id` (PK)
+- `user_id` (FK a `users`, nullable)
+- `event_type`
+- `event_data` (nullable)
+- `created_at`, `updated_at`
+
+---
+
+## 11. Consideraciones técnicas
 - Inertia evita una API REST separada: las páginas se sirven desde Laravel con props JSON.
 - Roles/permisos y autenticación habilitan control de acceso a nivel de rutas y vistas.
 - La combinación de MUI + Bootstrap + Material Dashboard requiere un manejo cuidadoso de estilos para evitar conflictos de CSS.
 - Vite gestiona hot-reload y bundling rápido de los assets.
-
