@@ -14,4 +14,9 @@ class PuestosModel extends Model
         'departamento_id',
         
     ];
+
+    public function departamento()
+    {
+        return $this->belongsTo(DepartamentosModel::class,'departamento_id','id');
+    }
 }

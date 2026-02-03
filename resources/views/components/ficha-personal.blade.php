@@ -13,7 +13,7 @@
   
   {{--Validando que el usuario sea de la misma compañia con el candidato--}}
   @foreach ($informacionlaboral as $il)
-  
+   
     @if ($il['id_empresa']==auth()->user()->empresa_id && $il['activo']=='s')
       @php
         $misma_empresa=true
@@ -48,7 +48,7 @@
           @if ($misma_empresa || $perfil[0]->perfilesdescrip==='admin' )
             <x-historial-laboral :informacionLaboral="$informacionlaboral" :datosEmpresa="$datosEmpresaActual" />
             @if ($perfil[0]->egreso===1 )
-              <x-egreso :informacionlaboral="$informacionlaboral" :empresas="$datosEmpresaActual" /> 
+              <x-egreso :informacionlaboral="$informacionlaboral" :empresas="$datosEmpresaActual"  :empresaActual="$empresaActual"  /> 
               @else
                 <div class="alert alert-warning"><strong>Falta autorizacion para hacer egresos!</strong></div>
             @endif

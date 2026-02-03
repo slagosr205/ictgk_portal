@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Ingresos extends Model
 {
     use HasFactory;
-    protected $table='egresos_ingresos';
+    
+    protected $table = 'egresos_ingresos';
 
-    protected $fillable=[
+    protected $fillable = [
         'identidad',
         'id_empresa',
         'fechaIngreso',
@@ -18,17 +19,26 @@ class Ingresos extends Model
         'area',
         'id_puesto',
         'activo',
-        /*'forma_egreso',
         'Comentario',
+        'validacion',
         'recomendado',
-        'recontrataria',
-        'prohibirIngreso',
-        'ComenProhibir',*/
-        
+        'tipo_egreso',
+        'forma_egreso',
+        // Agregar otros campos si existen en la tabla
     ];
      
-    public function candidatos()
+    public function candidato()
     {
-        return $this->belongsTo(Candidatos::class,'identidad','identidad');
+        return $this->belongsTo(Candidatos::class, 'identidad', 'identidad');
+    }
+
+    public function puesto()
+    {
+        return $this->belongsTo(PuestosModel::class, 'id_puesto', 'id');
+    }
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresas::class, 'id_empresa', 'id');
     }
 }

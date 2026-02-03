@@ -33,6 +33,17 @@ class User extends Authenticatable
         
     ];
 
+
+    public function perfil()
+    {
+        return $this->belongsTo(PerfilModel::class);
+    }
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresas::class,'empresa_id ','id');
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

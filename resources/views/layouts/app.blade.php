@@ -19,8 +19,9 @@
         'resources/css/app.css',
         'resources/css/form.css',
         'resources/css/navbar.css',
-        'resources/css/login.css',
+       // 'resources/css/login.css',
         'resources/css/jquery.dataTables.min.css',
+        'resources/css/material-dashboard.min.css',
         'resources/js/app.js',
         'resources/js/lib/jquery.counterup.js',  
         'resources/js/chart_custom.js',
@@ -29,8 +30,11 @@
         'resources/js/lib/waypoints.min.js',
         'resources/js/empresas.js',
         'resources/js/departamentos.js',
-        'resources/js/libpuestos/puestos.js'
+        'resources/js/libpuestos/puestos.js',
+        
     ])
+
+    @stack('scripts')
 </head>
 
 @guest
@@ -42,7 +46,7 @@
 @else
     <body>
         <div class="app-wrapper">
-            <x-menu-bar :logos="1"/>
+            <x-menu-bar :logos="1"/> 
             
             <main class="py-4 container-fluid">
                 @yield('content')
@@ -58,7 +62,7 @@
             </main>
         </div>
         
-        <x-historico />
+       <x-historico /> 
     </body>
 @endguest
 </html>

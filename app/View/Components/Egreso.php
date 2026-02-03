@@ -13,11 +13,13 @@ class Egreso extends Component
      */
     public $informacionlaboral;
     public $empresas;
-    public function __construct($informacionlaboral,$empresas)
+    public $empresaActual;
+    public function __construct($informacionlaboral,$empresas, $empresaActual)
     {
         //
         $this->informacionlaboral=$informacionlaboral;
         $this->empresas=$empresas;
+        $this->empresaActual=$empresaActual;
     }
 
     /**

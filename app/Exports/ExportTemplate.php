@@ -2,248 +2,324 @@
 
 namespace App\Exports;
 
-use App\Models\PuestosModel;
-use App\Models\Ingresos;
-use Carbon\Traits\ToStringFormat;
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithStyles;
+use App\Models\Empresas;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Events\AfterSheet;
-use Illuminate\Support\Facades\Schema;
-use Maatwebsite\Excel\Sheet;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
-use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
-use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Style;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Maatwebsite\Excel\Concerns\WithBackgroundColor;
+
 class ExportTemplate implements WithMultipleSheets
 {
-    public function sheets(): array
+    protected $cantidadFilas;
+
+    public function __construct(int $cantidadFilas = 10)
     {
-        $sheets = [];
-
-        // Hoja 1: Encabezados de las columnas
-        $sheets[] = new ColumnHeadersSheet();
-
-        // Hoja 2: Datos de los puestos
-        $sheets[] = new PuestosDataSheet();
-
-        return $sheets;
+        $this->cantidadFilas = $cantidadFilas;
     }
 
-
-
-    
-}
-// columnas del template
-class ColumnHeadersSheet implements FromCollection, WithHeadings, ShouldAutoSize,WithColumnFormatting, WithEvents,WithStrictNullComparison,WithStyles
-{
-    
-    public function collection(): Collection
+    public function sheets(): array
     {
-        $tableName = (new Ingresos())->getTable();
-        $columnHeaders = Schema::getColumnListing($tableName);
+        return [
+            new PlantillaIngresosSheet($this->cantidadFilas),  // ✅ PASAR EL PARÁMETRO
+            new PuestosSheet(),
+        ];
+    }
+}
 
-        $numberPositions = PuestosModel::select('puestos.id','puestos.nombrepuesto','departamentos.nombredepartamento')
-        ->join('departamentos','puestos.departamento_id','=','departamentos.id')
-        ->join('empresas','departamentos.empresa_id','=','empresas.id')
-        ->where('empresas.id',auth()->user()->empresa_id)
-        ->get()->count()+1;
+class PlantillaIngresosSheet implements FromArray, WithHeadings, WithEvents, WithTitle
+{
+    private $empresa;
+    private $puestos;
+    private $cantidadFilas;
 
-        // Simular datos para la hoja (puedes ajustar esto según tus necesidades)
-        $formula=collect();
+    public function __construct(int $cantidadFilas = 10)
+    {
+        $this->cantidadFilas = $cantidadFilas;
+        
+        $this->empresa = Empresas::select('id', 'nombre')
+            ->find(auth()->user()->empresa_id);
 
-        for ($i=2; $i <= 10; $i++) { 
-            # code...
-            $formula->push('=VLOOKUP(E'.$i.', \'Worksheet 1\'!A1:B'.$numberPositions.', 2, 0)');
+        $this->puestos = DB::table('puestos')
+            ->join('departamentos', 'puestos.departamento_id', '=', 'departamentos.id')
+            ->where('departamentos.empresa_id', auth()->user()->empresa_id)
+            ->select('puestos.id', 'puestos.nombrepuesto')
+            ->orderBy('puestos.nombrepuesto')
+            ->get();
+    }
+
+    public function title(): string
+    {
+        return 'Plantilla Ingresos';
+    }
+
+    public function array(): array
+    {
+        $nombreEmpresa = $this->empresa->nombre ?? '';
+        $idEmpresa = $this->empresa->id ?? '';
+        $rows = [];
+
+        $today = \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(new \DateTime());
+
+        // ✅ USAR $this->cantidadFilas en lugar de 10
+        for ($i = 0; $i < $this->cantidadFilas; $i++) {
+            $rows[] = [
+                '',                 // A: identidad
+                $nombreEmpresa,     // B: nombre_empresa
+                $idEmpresa,         // C: id_empresa
+                $today,             // D: fechaIngreso
+                '',                 // E: area
+                '',                 // F: nombre_puesto
+                '',                 // G: id_puesto
+                '',                 // H: validacion
+                's',                // I: recontrataria
+                '',                 // J: comentarios
+                '',                 // K: nombre
+                '',                 // L: apellido
+                '',                 // M: telefono
+                '',                 // N: correo
+                '',                 // O: direccion
+                '',                 // P: generoM_F
+                $today,             // Q: fecha_nacimiento
+            ];
         }
-       // dd($formula);
-        // Obtener la cantidad de columnas
-        $columnCount = count($columnHeaders);
 
-        // Agregar los datos a la última columna en la hoja de encabezados
-        foreach ($formula as $datum) {
-            $rowData = array_fill(0, $columnCount, ''); // Crear un array vacío con la misma cantidad de columnas
-            $rowData[$columnCount-11] = $datum; // Agregar el dato en la última columna
-            $rows[] = $rowData;
-        }
-
-       
-
-        return collect($rows);
+        return $rows;
     }
 
     public function headings(): array
     {
-        $headerElementRemove=['id',
-                                'fechaEgreso',
-                                'activo',
-                                'tipo_egreso',
-                                'forma_egreso',
-                                'recomendado',
-                                'bloqueo_recomendado',
-                                'prohibirIngreso',
-                                'ComenProhibir',
-                                'created_at',
-                                'updated_at'
-                            ];
-        $tableName = (new Ingresos())->getTable();
-        $columnHeaders = Schema::getColumnListing($tableName);
-        $trimcolumnHeaders=array_diff($columnHeaders,$headerElementRemove);
-        $trimcolumnHeaders['formula']='validacion';
-        $trimcolumnHeaders['nombre']='nombre';
-        $trimcolumnHeaders['apellido']='apellido';
-        $trimcolumnHeaders['telefono']='telefono';
-        $trimcolumnHeaders['correo']='correo';
-        $trimcolumnHeaders['direccion']='direccion';
-        $trimcolumnHeaders['generoM_F']='generoM_F';
-        $trimcolumnHeaders['fecha_nacimiento']='fecha_nacimiento';
-        return $trimcolumnHeaders;
+        return [
+            'identidad',
+            'empresa',
+            'id_empresa',
+            'fechaIngreso',
+            'area',
+            'puesto',
+            'id_puesto',
+            'validacion',
+            'recontrataria',
+            'Comentario',
+            'nombre',
+            'apellido',
+            'telefono',
+            'correo',
+            'direccion',
+            'generoM_F',
+            'fecha_nacimiento',
+        ];
     }
 
-    public function columnFormats(): array
-    {
-        return [
-            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY, // Formato de fecha para columna 'C'
-            'A' =>NumberFormat::FORMAT_TEXT,
-            
-        ];
-    }
-    
-    public function styles(Worksheet $sheet)
-    {
-        return [
-            1=>['font'=>['bold'=>true],
-                'borders' => [
-                    'bottom' => [
-                        'borderStyle' => Border::BORDER_DOUBLE,
-                        'color' => [
-                            'rgb' => '50195108'
-                        ]
-                    ],
-                ]
-        ],
-            
-        ];
-    }
     public function registerEvents(): array
     {
         return [
-            // handle by a closure.
             AfterSheet::class => function(AfterSheet $event) {
-                $tableName = (new Ingresos())->getTable();
-                $columnHeaders = Schema::getColumnListing($tableName);
-                // get layout counts (add 1 to rows for heading row)
-                $row_count = 200;
-                $column_count = count($columnHeaders);
+                $sheet = $event->sheet->getDelegate();
+                $lastRow = $this->cantidadFilas + 1; // +1 por el header
 
-                // set dropdown column
-                $drop_column = 'D';
+                // ========================================
+                // OCULTAR COLUMNAS
+                // ========================================
+                $sheet->getColumnDimension('C')->setVisible(false);
+                $sheet->getColumnDimension('G')->setVisible(false);
+                $sheet->getColumnDimension('H')->setVisible(false);
 
-                // set dropdown options
-                $options = [
-                    'administrativa',
-                    'operativa',
-                ];
-                $id_empresa=auth()->user()->empresa_id;
-                $columnEmpresa='B';
-                $columanIndentidad='P';
-                $drop_column_genero='M';
-                
-                $optionGenero=[
-                    'm',
-                    'f'
-                ];
-                // set dropdown list for first data row
-                $validation = $event->sheet->getCell("{$drop_column}2")->getDataValidation();
-                $validation->setType(DataValidation::TYPE_LIST );
-                $validation->setErrorStyle(DataValidation::STYLE_INFORMATION );
-                $validation->setAllowBlank(false);
-                $validation->setShowInputMessage(true);
-                $validation->setShowErrorMessage(true);
-                $validation->setShowDropDown(true);
-                $validation->setErrorTitle('Input error');
-                $validation->setError('Value is not in list.');
-                $validation->setPromptTitle('Pick from list');
-                $validation->setPrompt('Please pick a value from the drop-down list.');
-                $validation->setFormula1(sprintf('"%s"',implode(',',$options)));
+                // ========================================
+                // PROTEGER COLUMNAS
+                // ========================================
+                $sheet->getStyle("B2:B{$lastRow}")->getProtection()->setLocked(true);
+                $sheet->getStyle("C2:C{$lastRow}")->getProtection()->setLocked(true);
+                $sheet->getStyle("G2:G{$lastRow}")->getProtection()->setLocked(true);
 
-                // set dropdown list for first data row
-                $validation2 = $event->sheet->getCell("{$drop_column_genero}2")->getDataValidation();
-                $validation2->setType(DataValidation::TYPE_LIST );
-                $validation2->setErrorStyle(DataValidation::STYLE_INFORMATION );
-                $validation2->setAllowBlank(false);
-                $validation2->setShowInputMessage(true);
-                $validation2->setShowErrorMessage(true);
-                $validation2->setShowDropDown(true);
-                $validation2->setErrorTitle('Input error');
-                $validation2->setError('Value is not in list.');
-                $validation2->setPromptTitle('Pick from list');
-                $validation2->setPrompt('Please pick a value from the drop-down list.');
-                $validation2->setFormula1(sprintf('"%s"',implode(',',$optionGenero)));
-                for ($i = 2; $i <= 10; $i++) 
-                {
-                    $event->sheet->getCell("{$columnEmpresa}{$i}")->setValue($id_empresa);
-                   // $event->sheet->getCell("{$columanIndentidad}{$i}")->setValue('=ISNUMBER(SEARCH("-", B{$i}))');
-                    
-                }
+                // ========================================
+                // FÓRMULAS VLOOKUP
+                // ========================================
+                $puestosCount = $this->puestos->count() + 1;
                 
-                // clone validation to remaining rows
-                for ($i = 3; $i <= $row_count; $i++) {
-                    
-                    $event->sheet->getCell("{$drop_column}{$i}")->setDataValidation(clone $validation);
-                    $event->sheet->getCell("{$drop_column_genero}{$i}")->setDataValidation(clone $validation2); // Clonar validación para la nueva columna
-                
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $sheet->setCellValue("G{$row}", "=IFERROR(VLOOKUP(F{$row},Puestos!\$B:\$C,2,FALSE),\"\")");
+                    $sheet->setCellValue("H{$row}", "=IFERROR(VLOOKUP(F{$row},Puestos!\$B:\$B,1,FALSE),\"\")");
                 }
 
-                // set columns to autosize
-                for ($i = 1; $i <= $column_count; $i++) {
-                    $column = Coordinate::stringFromColumnIndex($i);
-                    $event->sheet->getColumnDimension($column)->setAutoSize(true);
+                // ========================================
+                // FORMATOS DE FECHA - ✅ USAR $lastRow
+                // ========================================
+                $sheet->getStyle("D2:D{$lastRow}")->getNumberFormat()
+                    ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+                
+                $sheet->getStyle("Q2:Q{$lastRow}")->getNumberFormat()
+                    ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+
+                // ========================================
+                // VALIDACIÓN DE FECHAS - ✅ USAR $lastRow
+                // ========================================
+                $dvFechaIngreso = new DataValidation();
+                $dvFechaIngreso->setType(DataValidation::TYPE_DATE);
+                $dvFechaIngreso->setErrorStyle(DataValidation::STYLE_STOP);
+                $dvFechaIngreso->setOperator(DataValidation::OPERATOR_BETWEEN);
+                $dvFechaIngreso->setFormula1('01/01/1900');
+                $dvFechaIngreso->setFormula2('31/12/2099');
+                $dvFechaIngreso->setShowInputMessage(true);
+                $dvFechaIngreso->setPromptTitle('Fecha de Ingreso');
+                $dvFechaIngreso->setPrompt('📅 Doble click para abrir el calendario. Formato: DD/MM/AAAA');
+                $sheet->setDataValidation("D2:D{$lastRow}", $dvFechaIngreso);
+
+                $dvFechaNacimiento = new DataValidation();
+                $dvFechaNacimiento->setType(DataValidation::TYPE_DATE);
+                $dvFechaNacimiento->setErrorStyle(DataValidation::STYLE_STOP);
+                $dvFechaNacimiento->setOperator(DataValidation::OPERATOR_BETWEEN);
+                $dvFechaNacimiento->setFormula1('01/01/1940');
+                $dvFechaNacimiento->setFormula2('31/12/2010');
+                $dvFechaNacimiento->setShowInputMessage(true);
+                $dvFechaNacimiento->setPromptTitle('Fecha de Nacimiento');
+                $dvFechaNacimiento->setPrompt('📅 Doble click para abrir el calendario. Formato: DD/MM/AAAA');
+                $sheet->setDataValidation("Q2:Q{$lastRow}", $dvFechaNacimiento);
+
+                // Resaltar fechas - ✅ USAR $lastRow
+                $sheet->getStyle("D2:D{$lastRow}")->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7F3FF']]
+                ]);
+                $sheet->getStyle("Q2:Q{$lastRow}")->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E7F3FF']]
+                ]);
+
+                // ========================================
+                // ESTILOS
+                // ========================================
+                $sheet->getStyle('A1:Q1')->applyFromArray([
+                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+                ]);
+
+                $sheet->getStyle("A1:Q{$lastRow}")->applyFromArray([
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => 'D9D9D9']]]
+                ]);
+
+                // ========================================
+                // DROPDOWNS - ✅ USAR $lastRow
+                // ========================================
+                
+                // Dropdown de Puestos
+                $dvPuesto = new DataValidation();
+                $dvPuesto->setType(DataValidation::TYPE_LIST);
+                $dvPuesto->setErrorStyle(DataValidation::STYLE_STOP);
+                $dvPuesto->setFormula1("Puestos!\$B\$2:\$B\${$puestosCount}");
+                $dvPuesto->setShowDropDown(true);
+                $dvPuesto->setShowInputMessage(true);
+                $dvPuesto->setPromptTitle('Seleccionar Puesto');
+                $dvPuesto->setPrompt('El ID se asigna automáticamente');
+                $sheet->setDataValidation("F2:F{$lastRow}", $dvPuesto);
+
+                // Dropdown de Área
+                $dvArea = new DataValidation();
+                $dvArea->setType(DataValidation::TYPE_LIST);
+                $dvArea->setFormula1('"administrativa,operativa"');
+                $dvArea->setShowDropDown(true);
+                $sheet->setDataValidation("E2:E{$lastRow}", $dvArea);
+
+                // Dropdown de Género
+                $dvGenero = new DataValidation();
+                $dvGenero->setType(DataValidation::TYPE_LIST);
+                $dvGenero->setFormula1('"M,F"');
+                $dvGenero->setShowDropDown(true);
+                $sheet->setDataValidation("P2:P{$lastRow}", $dvGenero);
+
+                // Dropdown de Recontrataria
+                $dvRecontrataria = new DataValidation();
+                $dvRecontrataria->setType(DataValidation::TYPE_LIST);
+                $dvRecontrataria->setFormula1('"s,n"');
+                $dvRecontrataria->setShowDropDown(true);
+                $sheet->setDataValidation("I2:I{$lastRow}", $dvRecontrataria);
+
+                // ========================================
+                // ANCHO DE COLUMNAS
+                // ========================================
+                $sheet->getColumnDimension('A')->setWidth(18);
+                $sheet->getColumnDimension('B')->setWidth(25);
+                $sheet->getColumnDimension('D')->setWidth(18);
+                $sheet->getColumnDimension('E')->setWidth(15);
+                $sheet->getColumnDimension('F')->setWidth(30);
+                $sheet->getColumnDimension('I')->setWidth(14);
+                $sheet->getColumnDimension('J')->setWidth(30);
+                $sheet->getColumnDimension('K')->setWidth(20);
+                $sheet->getColumnDimension('L')->setWidth(20);
+                $sheet->getColumnDimension('M')->setWidth(15);
+                $sheet->getColumnDimension('N')->setWidth(25);
+                $sheet->getColumnDimension('O')->setWidth(30);
+                $sheet->getColumnDimension('P')->setWidth(10);
+                $sheet->getColumnDimension('Q')->setWidth(18);
+
+                // ========================================
+                // INSTRUCCIONES
+                // ========================================
+                $instrRow = $lastRow + 2;
+                $sheet->setCellValue("A{$instrRow}", '📋 INSTRUCCIONES:');
+                $sheet->getStyle("A{$instrRow}")->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 12, 'color' => ['rgb' => '4472C4']],
+                ]);
+                
+                $instrucciones = [
+                    '1. Complete todos los campos requeridos',
+                    '2. Empresa e ID de puesto se calculan automáticamente',
+                    '3. Para guardar: Archivo → Guardar como → CSV (delimitado por comas)',
+                    '4. IMPORTANTE: Las columnas ocultas se incluirán en el CSV',
+                    '📅 FECHAS: Doble click en celdas azules para abrir el calendario',
+                    '✓ Identidad: 0000-0000-00000 | Género: M/F | Recontrataria: s/n',
+                ];
+
+                $row = $instrRow + 1;
+                foreach ($instrucciones as $inst) {
+                    $sheet->setCellValue("A{$row}", $inst);
+                    $sheet->getStyle("A{$row}")->getFont()->setItalic(true);
+                    $row++;
                 }
             },
         ];
     }
-
 }
 
-
-
-// Hoja para los datos de los puestos
-class PuestosDataSheet implements FromArray, WithHeadings
+class PuestosSheet implements FromArray, WithHeadings, WithEvents, WithTitle
 {
+    public function title(): string
+    {
+        return 'Puestos';
+    }
+
     public function array(): array
     {
-        $puestos = PuestosModel::select('puestos.id','puestos.nombrepuesto','departamentos.nombredepartamento')
-        ->join('departamentos','puestos.departamento_id','=','departamentos.id')
-        ->join('empresas','departamentos.empresa_id','=','empresas.id')
-        ->where('empresas.id',auth()->user()->empresa_id)
-        ->get()
-        ->toArray();
-        
-        return $puestos;
+        return DB::table('puestos')
+            ->join('departamentos', 'puestos.departamento_id', '=', 'departamentos.id')
+            ->where('departamentos.empresa_id', auth()->user()->empresa_id)
+            ->select('puestos.id', 'puestos.nombrepuesto', 'puestos.id')
+            ->orderBy('puestos.nombrepuesto')
+            ->get()
+            ->map(fn($p) => [$p->id, $p->nombrepuesto, $p->id])
+            ->toArray();
     }
 
     public function headings(): array
     {
+        return ['ID', 'NOMBRE_PUESTO', 'ID'];
+    }
 
-        return ['ID PUESTO','NOMBRE PUESTO','DEPARTAMENTO']; 
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function(AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                
+                $sheet->setSheetState(Worksheet::SHEETSTATE_HIDDEN);
+                $sheet->getStyle('A1:C1')->getFont()->setBold(true);
+                $sheet->getColumnDimension('A')->setWidth(10);
+                $sheet->getColumnDimension('B')->setWidth(30);
+            },
+        ];
     }
 }
-
-
-// Hoja para los datos de los puestos
-
-

@@ -14,4 +14,9 @@ class DepartamentosModel extends Model
         'empresa_id',
         
     ];
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresas::class,'empresa_id','id');
+    }
 }

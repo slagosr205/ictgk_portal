@@ -12,10 +12,10 @@ class PuestosAdd extends Component
      * Create a new component instance.
      */
     protected $departamentos;
-    public function __construct($departament)
+    public function __construct($departamentos)
     {
         //
-        $this->departamentos= $departament;
+        $this->departamentos= $departamentos;
        
     }
 

@@ -6,36 +6,26 @@ use App\Events\RegistroActualizado;
 use App\Http\Controllers\Controller;
 use App\Models\Ingresos;
 use App\Models\Egresos;
-use App\Models\PuestosModel;
-use Illuminate\Database\QueryException;
-use Illuminate\Http\RedirectResponse;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\File;
-use Illuminate\Http\Response;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
+
 use App\Models\Candidatos;
 use App\Models\Empresas;
 use App\Models\User;
-use Illuminate\Validation\Rule;
+
 use Illuminate\Validation\ValidationException;
 use App\Mail\EnviarSolicitudCandidato;
 use Exception;
-//use Mail;
-use Validator;
-use Jenssegers\Date\Date;
+
 use App\Exports\ExportTemplateOut;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
-use App\Exceptions\ArrayFieldCountException;
-use App\Imports\CandidateImport;
+
 use App\Imports\CsvImport;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
-use Swift_TransportException;
+
 use Symfony\Component\Mailer\Exception\TransportException;
 
 class CandidatosController extends Controller
@@ -621,24 +611,13 @@ class CandidatosController extends Controller
      */
     public function GetIndividualInfo($dni)
     {
-        /**
-         * cuando se hace la consulta se tiene que validar 
-         * que el usuario tenga el campo de fecha de egreso vacio
-         */
-
-        // quitar de la tabla egreso_ingresos el campo activo, y agregarlo en la tabla de candidatos y que se actualice cada vez que se haga cualquiera de las dos acciones
         $newdni = str_replace('-', '', $dni);
 
-        //consultar la informacion personal del candidato.
+        // Candidato
         $candidatos = Candidatos::where('identidad', $newdni)->first();
 
-        //dd($newdni);
-        /* $personalInfo = Ingresos::where('identidad','=', $newdni)
-            ->join('puestos', 'egresos_ingresos.id_puesto', '=', 'puestos.id')
-            ->orderBy('egresos_ingresos.created_at', 'desc')
-            ->get();*/
-
-        $personalInfo = Ingresos::where('egresos_ingresos.identidad', '=', $newdni)
+        // Info laboral
+        $personalInfo = Ingresos::where('egresos_ingresos.identidad', $newdni)
             ->leftJoin('puestos', 'egresos_ingresos.id_puesto', '=', 'puestos.id')
             ->leftJoin('empresas', 'egresos_ingresos.id_empresa', '=', 'empresas.id')
             ->select(
@@ -649,8 +628,10 @@ class CandidatosController extends Controller
             ->orderBy('egresos_ingresos.created_at', 'desc')
             ->get();
 
-        // Validar que al menos exista el candidato
-        if (!$candidatos && $personalInfo->isEmpty()) {
+
+
+        // ❌ No existe en ningún lado
+        if (is_null($candidatos) && $personalInfo->isEmpty()) {
             return response()->json([
                 'response' => 'No se encontró información para el DNI proporcionado',
                 'code' => 404
@@ -659,29 +640,31 @@ class CandidatosController extends Controller
 
         $empresas = Empresas::all();
 
-        $laboralInfo = [];
+
+
+        $ingreso = Ingresos::with([
+            'puesto.departamento.empresa'
+        ])
+            ->where('identidad', $dni)
+            ->where('activo', 's')
+            ->first();
+
+
+        $empresaActual = $ingreso
+            ? $ingreso->puesto->departamento->empresa
+            : Empresas::find($personalInfo->first()->id_empresa);
 
 
 
-        if (!$personalInfo->isEmpty() && $candidatos) {
-
-            foreach ($personalInfo as $pi) {
-                if ($pi['identidad'] == $newdni) {
-                    $laboralInfo[] = $pi;
-                }
-            }
-
-            // Si se encontraron datos, retornar la vista con los datos
-            return view('consultaficha', ['laboralInfo' => $laboralInfo, 'candidatos' => $candidatos, 'DatosEmpresa' => $empresas]);
-        } else {
-            // Si no se encontraron datos, retornar un mensaje de error
-            $message = [
-                'response' => 'No se encontro informacion',
-                'code' => 404
-            ];
-            return response()->json($message);
-        }
+        // ✅ Existe candidato (con o sin ingresos)
+        return view('consultaficha', [
+            'laboralInfo' => $personalInfo, // ya viene filtrado
+            'candidatos'  => $candidatos,
+            'DatosEmpresa' => $empresas,
+            'empresaActual' => $empresaActual,
+        ]);
     }
+
     /**
      * Funcion que permite procesar la actualizacion de un colaborador, la informacion se captura en con un evento click del boton de la ficha personal.
      */
@@ -691,6 +674,9 @@ class CandidatosController extends Controller
         $candidatos->direccion = $re->input('direccion');
         $candidatos->telefono = $re->input('telefono');
         $candidatos->correo = $re->input('correo');
+        $candidatos->nombre = $re->input('nombre');
+        $candidatos->apellido = $re->input('apellido');
+
         $candidatos->save();
         if ($candidatos->wasChanged()) {
             event(new RegistroActualizado($candidatos));
@@ -733,7 +719,7 @@ class CandidatosController extends Controller
                 return redirect()->back()->with(['mensaje' => 'ya existe registro']);
             }
         } catch (Exception $exception) {
-            return redirect()->back()->with(['mensaje' => 'se ha producido un error: =>'.$exception->getMessage()]);
+            return redirect()->back()->with(['mensaje' => 'se ha producido un error: =>' . $exception->getMessage()]);
         }
     }
 
@@ -1183,10 +1169,16 @@ class CandidatosController extends Controller
 
 
             if (!is_null($request)) {
+
+
+
+
                 $existemismaEmpresa = Egresos::where('identidad', $request->input('identidad'))
                     ->where('id_empresa', $request->input('id_empresa'))
                     ->where('activo', '=', 's')
                     ->get();
+
+
 
                 $candidato = Candidatos::where('identidad', $request->input('identidad'))->get();
 
@@ -1208,7 +1200,7 @@ class CandidatosController extends Controller
                     // return response()->json(['mensaje'=>'ya existe en esta compañia','icon'=>'warning']);
                 } else {
 
-
+                    dd('no existe el registro para egresar');
 
                     return redirect()->back()->with(['mensaje' => 'fue ingresado con exito'])->with(['icon' => 'success']);
                 }

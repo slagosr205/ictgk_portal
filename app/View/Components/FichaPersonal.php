@@ -15,12 +15,15 @@ class FichaPersonal extends Component
      public $informacionlaboral;
      public $infocandidatos;
      public $datosEmpresaActual;
-    public function __construct($informacionlaboral, $infocandidatos, $datosEmpresaActual)
+     public $empresaActual;
+
+    public function __construct($informacionlaboral, $infocandidatos, $datosEmpresaActual, $empresaActual)
     {
         //
         $this->informacionlaboral=$informacionlaboral;
         $this->infocandidatos=$infocandidatos;
         $this->datosEmpresaActual=$datosEmpresaActual;
+        $this->empresaActual=$empresaActual;
     }
 
     /**

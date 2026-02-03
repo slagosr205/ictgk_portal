@@ -26,7 +26,10 @@ var table=$('#tbcandidatos').DataTable({
 });
 var tbperfiles=new DataTable('#tbperfiles')
 
-var dtUsuarios=new DataTable('#dtUsuarios')
+var dtUsuariosEl = document.getElementById('dtUsuarios');
+if (dtUsuariosEl && dtUsuariosEl.dataset.datatable === 'true') {
+    var dtUsuarios = new DataTable('#dtUsuarios');
+}
 //var tbhistoricoempresa=new DataTable('#tbhistoricoempresa');
 if(document.getElementById('mensaje')){
     let mensaje=document.getElementById('mensaje')
@@ -98,6 +101,9 @@ $('.card2').click(function(){
     })
 })
 
+// ============================================
+// CONFIGURACIÓN Y UTILIDADES
+// ============================================
 
 /**
  * Valida formato de DNI/Identidad
@@ -115,7 +121,6 @@ const validarDNI = (dni) => {
     return true;
 };
 
-
 /**
  * Muestra un loader mientras se carga la información
  */
@@ -126,6 +131,18 @@ const mostrarLoader = (elemento) => {
                 <span class="visually-hidden">Cargando...</span>
             </div>
             <p class="mt-3">Buscando información...</p>
+        </div>
+    `;
+};
+
+/**
+ * Muestra mensaje de búsqueda vacía
+ */
+const mostrarMensajeInicial = (elemento) => {
+    elemento.innerHTML = `
+        <div class="text-center py-5">
+            <i class="ri-search-line" style="font-size: 64px; color: #6c757d;"></i>
+            <p class="mt-3 text-muted">Ingrese un DNI para buscar información</p>
         </div>
     `;
 };
@@ -189,14 +206,101 @@ const configurarBotonesActualizacion = () => {
     });
 };
 
+const ActualizaFicha = (correo, telefono, direccion, id) => {   
+    const formData = new FormData();
+    formData.append('correo', correo);
+    formData.append('telefono', telefono);
+    formData.append('direccion', direccion);
+    formData.append('id', id);
+
+    // Convertir a mayúsculas automáticamente en nombre completo
+        const nombreInput = document.getElementById('nombre');
+        const apellidoInput = document.getElementById('apellido');
+
+        if (nombreInput) {
+            nombreInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+            
+            // Validar que solo contenga letras y espacios
+            nombreInput.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.keyCode);
+                if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        if (apellidoInput) {
+            apellidoInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+            
+            // Validar que solo contenga letras y espacios
+            apellidoInput.addEventListener('keypress', function(e) {
+                const char = String.fromCharCode(e.keyCode);
+                if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        formData.append('nombre', nombreInput ? nombreInput.value.trim() : '');
+        formData.append('apellido', apellidoInput ? apellidoInput.value.trim() : '');
+
+    fetch('/actualizacion-ficha', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        
+        if (data.icon === 'success') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Información actualizada correctamente',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+        } else {
+            throw new Error(data.message || 'Error al actualizar la información');
+        }
+    })
+    .catch(error => {
+        console.error('Error al actualizar la información:', error);
+        Swal.fire({
+            title: 'Error',
+            text: error.message || 'No se pudo actualizar la información. Intente nuevamente.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar'
+        });
+    });
+};
+
+
 /**
  * Muestra modal para crear nuevo candidato
  */
 const mostrarModalNuevoCandidato = () => {
     const modalElement = document.getElementById('registerCandidate');
     if (modalElement) {
-        const modal = new bootstrap.Modal(modalElement);
+        const modal = new Modal(modalElement);
         modal.show();
+        
+        // Escuchar cuando se cierra el modal
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            const fichapersonal = document.getElementById('fichapersonal');
+            if (fichapersonal) {
+                mostrarMensajeInicial(fichapersonal);
+            }
+        }, { once: true }); // Solo ejecutar una vez
+        
     } else {
         console.error('Modal #registerCandidate no encontrado');
     }
@@ -236,25 +340,50 @@ const buscarInformacionPersonal = async (dni) => {
             }
         });
         
-        // Validar respuesta HTTP
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Obtener el content-type antes de procesar
+        const contentType = response.headers.get('content-type');
+        
+        // Caso especial: 404 es un caso de negocio, no un error
+        if (response.status === 404) {
+            let mensaje = 'No se encontró información del candidato';
+            
+            // Intentar obtener el mensaje del servidor
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const data = await response.json();
+                    mensaje = data.response || data.message || mensaje;
+                } catch (e) {
+                    console.warn('No se pudo parsear JSON del 404');
+                }
+            }
+            
+            await manejarCandidatoNoEncontrado(mensaje);
+            return;
         }
         
-        // Intentar parsear como JSON primero
-        const contentType = response.headers.get('content-type');
+        // Para otros errores HTTP (500, 503, etc.) sí lanzar error
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.status} ${response.statusText}`);
+        }
+        
+        // Procesar respuesta exitosa
         let data;
         
         if (contentType && contentType.includes('application/json')) {
             data = await response.json();
             
-            // Caso: No se encontró información
-            if (data.code === 404 || data.code === 400) {
+            // Verificar si hay un código de error en el JSON
+            if (data.code === 400 || data.code === 404) {
                 await manejarCandidatoNoEncontrado(data.response || 'No se encontró información');
                 return;
             }
+            
+            // Si el JSON tiene un mensaje de error pero código 200
+            if (data.error || data.message) {
+                throw new Error(data.error || data.message);
+            }
         } else {
-            // Es HTML directo
+            // Es HTML directo (caso normal de éxito)
             data = await response.text();
         }
         
@@ -281,14 +410,14 @@ const buscarInformacionPersonal = async (dni) => {
         fichapersonal.innerHTML = `
             <div class="alert alert-danger" role="alert">
                 <i class="ri-error-warning-line me-2"></i>
-                <strong>Error:</strong> No se pudo cargar la información. 
-                Por favor, intente nuevamente.
+                <strong>Error de conexión:</strong> No se pudo cargar la información. 
+                Por favor, verifique su conexión e intente nuevamente.
             </div>
         `;
         
         Swal.fire({
             title: 'Error de conexión',
-            text: 'No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.',
+            text: error.message || 'No se pudo conectar con el servidor. Verifique su conexión e intente nuevamente.',
             icon: 'error',
             confirmButtonText: 'Aceptar'
         });
@@ -310,13 +439,15 @@ const inicializarComponentes = async () => {
     
     // Inicializar tooltips si existen
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-    [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip (tooltipTriggerEl));
+    [...tooltipTriggerList].map(tooltipTriggerEl => new Tooltip(tooltipTriggerEl));
 };
 
 /**
  * Maneja el caso cuando no se encuentra un candidato
  */
 const manejarCandidatoNoEncontrado = async (mensaje) => {
+    const fichapersonal = document.getElementById('fichapersonal');
+    
     const result = await Swal.fire({
         title: mensaje || 'Candidato no encontrado',
         text: '¿Desea agregar un nuevo registro?',
@@ -330,9 +461,13 @@ const manejarCandidatoNoEncontrado = async (mensaje) => {
     
     if (result.isConfirmed) {
         mostrarModalNuevoCandidato();
+    } else {
+        // Si cancela, mostrar mensaje inicial
+        if (fichapersonal) {
+            mostrarMensajeInicial(fichapersonal);
+        }
     }
 };
-
 
 // ============================================
 // EVENT LISTENERS
@@ -342,6 +477,12 @@ const manejarCandidatoNoEncontrado = async (mensaje) => {
  * Inicializar todo cuando el DOM esté listo
  */
 document.addEventListener('DOMContentLoaded', () => {
+    // Mostrar mensaje inicial
+    const fichapersonal = document.getElementById('fichapersonal');
+    if (fichapersonal && fichapersonal.innerHTML.trim() === '') {
+        mostrarMensajeInicial(fichapersonal);
+    }
+    
     // Event listener para botón de búsqueda
     const btnDNI = document.getElementById('btndni');
     if (btnDNI) {
@@ -355,12 +496,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Event listener para Enter en input DNI
-    const dniInput = document.getElementById('dni');
+   /* const dniInput = document.getElementById('dni');
     if (dniInput) {
         dniInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                buscarInformacionPersonal(e.target.value);
+                buscarInformacionPersonal(e.target.value.replace);
             }
         });
         
@@ -369,10 +510,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // Remover caracteres no numéricos excepto guiones
             e.target.value = e.target.value.replace(/[^\d-]/g, '');
         });
+    }*/
+    
+    // Event listener global para el modal (por si se abre desde otro lugar)
+    const modalElement = document.getElementById('registerCandidate');
+    if (modalElement) {
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            const fichapersonal = document.getElementById('fichapersonal');
+            // Solo limpiar si está mostrando el loader
+            if (fichapersonal && fichapersonal.innerHTML.includes('Buscando información')) {
+                mostrarMensajeInicial(fichapersonal);
+            }
+        });
     }
 });
-
-
 
 // ============================================
 // LIMPIEZA AL SALIR (Prevenir memory leaks)
@@ -386,39 +537,6 @@ window.addEventListener('beforeunload', () => {
         }
     }
 });
-
-
-
-
-//cuando se dispare el evento, se ejecutar la actualizacion del registro
-
-    // Obtener todos los elementos con la clase "btnupdate"
-    // Agregar un controlador de eventos de clic a cada botón
-   
-
-function ActualizaFicha(correo, telefono, direccion,id)
-{
-    $.ajax({
-        url:'/actualizacion-ficha/',
-        type:'POST',
-        headers:{
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-        },
-        data:{id:id,correo:correo,telefono:telefono,direccion:direccion},
-        success:function(res){
-            console.log(res);
-            Swal.fire({
-                title:res.titulo,
-                text:res.mensaje,
-                icon:res.icon
-            })
-        },
-        error:function(error){
-            console.error(error);
-        }
-    })
-}
-
 
 
 var success=document.getElementById('success')
@@ -602,22 +720,26 @@ document.addEventListener('click',function(event){
 
 
 const botonesDesbloquear = document.querySelectorAll('.btnbloqueo');
-const modalidentidad=document.getElementById('modalidentidad')
-const lockidentidad=document.getElementById('lockidentidad')
+const modalidentidad = document.getElementById('modalidentidad');
+const lockidentidad = document.getElementById('lockidentidad');
     // Iterar sobre cada botón y agregar un evento de clic a cada uno
     document.addEventListener('click', function(event) {
-        const identidad = event.target.value;
+        const unlockBtn = event.target.closest('.btndesbloqueo');
+        const lockBtn = event.target.closest('.btnbloqueo');
+        const identidad = unlockBtn
+            ? (unlockBtn.value || unlockBtn.getAttribute('value') || '')
+            : (lockBtn ? (lockBtn.value || lockBtn.getAttribute('value') || '') : '');
         
-        if (event.target.classList.contains('btndesbloqueo')) {
+        if (unlockBtn && modalidentidad) {
             
             modalidentidad.value = identidad;
             console.log('Desbloquear candidato con identidad:', identidad);
         }else{
-            if (event.target.classList.contains('btnbloqueo')) 
+            if (lockBtn && lockidentidad) 
             {
                 
                 lockidentidad.value = identidad;
-                console.log('Desbloquear candidato con identidad:', identidad);
+                console.log('Bloquear candidato con identidad:', identidad);
             }
         }
 

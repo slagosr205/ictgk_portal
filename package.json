@@ -15,7 +15,6 @@
         "vite": "^5.0.0"
     },
     "dependencies": {
-
         "@date-io/dayjs": "^3.2.0",
         "@emotion/react": "^11.14.0",
         "@emotion/styled": "^11.14.1",
@@ -23,7 +22,7 @@
         "@mui/icons-material": "^7.2.0",
         "@mui/material": "^7.2.0",
         "@mui/x-date-pickers": "^8.9.2",
-
+        "@tailwindcss/vite": "^4.1.18",
         "bootstrap-icons": "^1.11.3",
         "chart.js": "^4.4.1",
         "chartjs-plugin-datalabels": "^2.2.0",
@@ -43,6 +42,7 @@
         "react-hook-form": "^7.61.1",
         "remixicon": "^4.2.0",
         "sweetalert2": "^11.6.13",
+        "tailwindcss": "^4.1.18",
         "waypoints": "^4.0.1"
     }
 }

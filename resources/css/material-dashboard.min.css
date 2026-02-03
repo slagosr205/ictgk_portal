@@ -2703,12 +2703,12 @@ progress {
 .form-control {
    display: block;
    width: 100%;
-   padding: .5rem 0;
+   padding: .5rem 0.75rem;
    font-size: .875rem;
    font-weight: 400;
    line-height: 1.5rem;
    color: #495057;
-   background-color: transparent;
+   background-color: #fff;
    background-clip: padding-box;
    border: 1px solid #d2d6da;
    appearance: none;
@@ -2733,9 +2733,9 @@ progress {
 .form-control:focus {
    color: #495057;
    background-color: transparent;
-   border-color: transparent;
+   border-color: #86b7fe;;
    outline: 0;
-   box-shadow: none
+   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 .form-control::-webkit-date-and-time-value {
@@ -3275,14 +3275,14 @@ textarea.form-control-sm {
 .input-group-text {
    display: flex;
    align-items: center;
-   padding: .5rem 0;
+   padding: .5rem 0.75rem;
    font-size: .875rem;
    font-weight: 400;
    line-height: 1.5rem;
    color: #344767;
    text-align: center;
    white-space: nowrap;
-   background-color: transparent;
+   background-color: #f8f9fa;
    border: 1px solid #d2d6da;
    border-radius: .375rem
 }
@@ -3291,7 +3291,7 @@ textarea.form-control-sm {
 .input-group-lg>.form-control,
 .input-group-lg>.form-select,
 .input-group-lg>.input-group-text {
-   padding: .75rem;
+   padding: .75rem 1rem;
    font-size: .875rem;
    border-radius: .5rem
 }

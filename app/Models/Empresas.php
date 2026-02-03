@@ -18,4 +18,6 @@ class Empresas extends Model
         'estado',
         'logo',
     ];
+
+    
 }

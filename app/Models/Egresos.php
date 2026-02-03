@@ -27,4 +27,14 @@ class Egresos extends Model
         'ComenProhibir',
         
     ];
+
+    public function candidatos()
+    {
+        return $this->belongsTo(Candidatos::class,'identidad','identidad');
+    }
+
+    public  function puesto()
+    {
+        return $this->belongsTo(PuestosModel::class,'id_puesto','id');
+    }
 }

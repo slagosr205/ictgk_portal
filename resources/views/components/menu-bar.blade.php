@@ -1,82 +1,158 @@
- <!-- Navbar Start -->
- <nav class="navbar navbar-expand-lg bg-white navbar-light sticky-top p-0" style="background-color: #072132 !important"  >
-    <a href="/home" class="navbar-brand d-flex align-items-center px-4 px-lg-5">
-        <img src="{{Storage::url('altialogoblanco.png')}}" width="160px" alt="">
-    </a>
-   
-    <h4 class="text-center text-white">Portal de Reclutamiento</h4>
-    <h4 class="text-center text-white px-4"><strong>{{$logos[0]['nombre']}}</strong></h4>
-    <button type="button" class="navbar-toggler me-4" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse " id="navbarCollapse">
-        <div class="navbar-nav ms-auto ">
-            @guest
-                <a href="/home" class="nav-item nav-link active text-white">Inicio</a>
-                @if (Route::has('login'))
+<!-- Navbar Start -->
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top p-0 custom-navbar">
+    <div class="container-fluid px-4">
+        <!-- Logo -->
+        <a href="/home" class="navbar-brand d-flex align-items-center py-3">
+            <img src="{{ Storage::url('altialogoblanco.png') }}" width="160px" alt="Logo" class="img-fluid">
+        </a>
+        
+        <!-- Título Portal -->
+        <div class="d-none d-lg-flex align-items-center mx-auto">
+            <h4 class="text-white mb-0 me-4">Portal de Reclutamiento</h4>
+            <span class="badge bg-light text-dark px-3 py-2">{{ $logos[0]['nombre'] }}</span>
+        </div>
+
+        <!-- Toggle Button -->
+        <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Menu Items -->
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <!-- Mobile Titles -->
+            <div class="d-lg-none text-center py-3 border-bottom border-secondary">
+                <h5 class="text-white mb-2">Portal de Reclutamiento</h5>
+                <span class="badge bg-light text-dark">{{ $logos[0]['nombre'] }}</span>
+            </div>
+
+            <ul class="navbar-nav ms-auto align-items-lg-center">
+                @guest
+                    <!-- Guest Menu -->
                     <li class="nav-item">
-                        <a class="nav-link text-white" href="/">{{ __('Login') }}</a>
-                    </li>
-                @endif
-
-              {{---  @if (Route::has('register'))
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                    </li>
-                @endif---}}
-            @else
-                    <!---Inicio de menu dinamico-->
-                <a href="/home" class="nav-item nav-link active text-white">Inicio</a>
-                <a href="#" class="nav-item nav-link active text-white" data-bs-toggle="modal" data-bs-target="#historicoModal">Historico</a>
-                
-                @foreach ($perfil as $pu)
-               
-                    
-                
-                <div class="dropdown mt-3" >
-
-                    <a href="#" class="btn dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre style="background-color: #072132 !important"><strong class="text-white">Gestion</strong></a>
-                    
-                    <div class="dropdown-menu ">
-                        <a href="{{route('candidatos')}}" class="dropdown-item"><i class="px-2 ri-user-follow-line"></i>Candidatos</a>
-                        
-                        @if ($pu->gestiontablas===1)
-                            <a href="{{route('empresas')}}"         class="dropdown-item"><i  class=" px-2 ri-government-line"></i>Empresas</a>
-                            <a href="{{route('seccion-perfiles')}}" class="dropdown-item"><i class="px-2 ri-team-line"></i>Roles</a>
-                            <a href="{{ route('register') }}"       class="dropdown-item" ><i class="px-2 ri-id-card-line"></i>{{ __('Registro Usuario') }}</a>
-                        @endif
-                        
-                        <a href="{{route('departamentos')}}"        class="dropdown-item"><i class="px-2 ri-store-line"></i>Departamentos</a>
-                        <a href="{{route('puestos')}}"              class="dropdown-item"><i class="px-2 ri-team-line"></i>Puestos</a>
-                        
-                    </div>
-                </div>
-                
-            
-                    @if ($pu->visualizarinformes===1)
-                        <a href="{{route('informes')}}" class="nav-item nav-link text-white">Informe</a>
-                    @endif
-                @endforeach
-
-                <!--Final de menu dinamico-->
-                <div class="dropdown mt-3">
-                    <a href="#" class="btn dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre><strong class="text-white"><i class="px-2 ri-user-received-line"></i>{{ Auth::user()->name }}</strong></a>
-                    <div class="dropdown-menu ">
-                        <a class="dropdown-item " href="{{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();"><i class="ri-door-open-line"></i><strong>
-                                                             {{ __('Logout') }}
-                                                     </strong>      
+                        <a href="/home" class="nav-link">
+                            <i class="ri-home-4-line me-2"></i>Inicio
                         </a>
+                    </li>
+                    @if (Route::has('login'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="ri-login-box-line me-2"></i>{{ __('Login') }}
+                            </a>
+                        </li>
+                    @endif
+                @else
+                    <!-- Authenticated Menu -->
+                    <li class="nav-item">
+                        <a href="/home" class="nav-link">
+                            <i class="ri-home-4-line me-2"></i>Inicio
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#historicoModal">
+                            <i class="ri-history-line me-2"></i>Histórico
+                        </a>
+                    </li>
+                    
+                    @foreach ($perfil as $pu)
+                        <!-- Gestión Dropdown -->
+                        <li class=" dropdown custom-dropdown">
+                            <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-settings-3-line me-2"></i>Gestión
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu">
+                                <li>
+                                    <a href="{{ route('candidatos') }}" class="dropdown-item">
+                                        <i class="ri-user-follow-line me-2"></i>
+                                        <span>Candidatos</span>
+                                    </a>
+                                </li>
+                                
+                                @if ($pu->gestiontablas === 1)
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li class="dropdown-header">Administración</li>
+                                    <li>
+                                        <a href="{{ route('empresas') }}" class="dropdown-item">
+                                            <i class="ri-government-line me-2"></i>
+                                            <span>Empresas</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('seccion-perfiles') }}" class="dropdown-item">
+                                            <i class="ri-team-line me-2"></i>
+                                            <span>Roles</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a href="{{ route('register') }}" class="dropdown-item">
+                                            <i class="ri-id-card-line me-2"></i>
+                                            <span>{{ __('Registro Usuario') }}</span>
+                                        </a>
+                                    </li>
+                                @endif
+                                
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="dropdown-header">Organización</li>
+                                <li>
+                                    <a href="{{ route('departamentos') }}" class="dropdown-item">
+                                        <i class="ri-store-line me-2"></i>
+                                        <span>Departamentos</span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('puestos') }}" class="dropdown-item">
+                                        <i class="ri-briefcase-line me-2"></i>
+                                        <span>Puestos</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                        
+                        <!-- Informe Link -->
+                        @if ($pu->visualizarinformes === 1)
+                            <li class="nav-item">
+                                <a href="{{ route('informes') }}" class="nav-link">
+                                    <i class="ri-file-chart-line me-2"></i>Informe
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
 
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf
-                        </form>
-                    </div>
-                </div>
-                
-            @endguest
+                    <!-- User Dropdown -->
+                    <li class=" dropdown custom-dropdown ms-lg-2">
+                        <a href="#" class="nav-link dropdown-toggle user-dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">
+                                    <i class="ri-user-line"></i>
+                                </div>
+                                <span>{{ Auth::user()->name }}</span>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end custom-dropdown-menu">
+                            <li class="dropdown-header">
+                                <div class="text-center py-2">
+                                    <div class="user-avatar-lg mb-2">
+                                        <i class="ri-user-line"></i>
+                                    </div>
+                                    <strong>{{ Auth::user()->name }}</strong>
+                                    <div class="small text-muted">{{ Auth::user()->email }}</div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ route('logout') }}"
+                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                    <i class="ri-logout-box-line me-2"></i>
+                                    <span>{{ __('Cerrar Sesión') }}</span>
+                                </a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                @endguest
+            </ul>
         </div>
     </div>
 </nav>

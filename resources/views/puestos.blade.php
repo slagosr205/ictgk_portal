@@ -70,7 +70,7 @@
 </div>
 
 <x-puestos.created-modal />
-<x-puestos.puestos-add :departament="$departamentos"/>
+<x-puestos.puestos-add :departamentos="$departamentos"/>
 <div class="row">
     <div class="col-md-6">
         @if (session('updatedPositionserror'))
