@@ -638,23 +638,49 @@ class CandidatosController extends Controller
             ], 404);
         }
 
+        // ⚠️ Caso especial: Existen ingresos pero NO existe el candidato
+        // Esto indica datos inconsistentes en la base de datos
+        if (is_null($candidatos) && !$personalInfo->isEmpty()) {
+            // Log para debugging
+            \Log::warning("Ingresos sin candidato asociado detectados", [
+                'identidad' => $newdni,
+                'cantidad_ingresos' => $personalInfo->count(),
+                'ingresos_ids' => $personalInfo->pluck('id')->toArray()
+            ]);
+
+            return view('error-datos-inconsistentes', [
+                'identidad' => $newdni,
+                'mensaje' => 'Se encontraron registros de ingresos pero no existe información del candidato',
+                'detalles' => 'Por favor contacte al departamento de Recursos Humanos para corregir esta inconsistencia en los datos.',
+                'ingresos' => $personalInfo,
+            ]);
+        }
+
         $empresas = Empresas::all();
-
-
 
         $ingreso = Ingresos::with([
             'puesto.departamento.empresa'
         ])
-            ->where('identidad', $dni)
+            ->where('identidad', $newdni)
             ->where('activo', 's')
             ->first();
 
+        // Validar que existan las relaciones antes de acceder a ellas
+        $empresaActual = null;
 
-        $empresaActual = $ingreso
-            ? $ingreso->puesto->departamento->empresa
-            : Empresas::find($personalInfo->first()->id_empresa);
+        if ($ingreso && $ingreso->puesto && $ingreso->puesto->departamento && $ingreso->puesto->departamento->empresa) {
+            $empresaActual = $ingreso->puesto->departamento->empresa;
+        } elseif (!$personalInfo->isEmpty() && $personalInfo->first()->id_empresa) {
+            $empresaActual = Empresas::find($personalInfo->first()->id_empresa);
+        }
 
-
+        // Validación adicional para asegurar que tenemos toda la información necesaria
+        if (is_null($empresaActual)) {
+            \Log::warning("No se pudo determinar la empresa actual", [
+                'identidad' => $newdni,
+                'tiene_ingreso' => !is_null($ingreso),
+            ]);
+        }
 
         // ✅ Existe candidato (con o sin ingresos)
         return view('consultaficha', [

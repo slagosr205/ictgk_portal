@@ -265,6 +265,7 @@
 
 @push('scripts')
 <script>
+    import Swal from 'sweetalert2';
     document.addEventListener('DOMContentLoaded', function() {
         const formCandidato = document.getElementById('formNuevoCandidato');
         const modalCandidato = document.getElementById('registerCandidate');

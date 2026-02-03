@@ -6,21 +6,34 @@
       $bloqueo_recomendado=false;
       $identidad=null;
       $empresaID=null;
-      
-      
-            
+
+      // Validar que exista información del candidato
+      if (is_null($infocandidatos)) {
+          echo '<div class="alert alert-danger">
+              <i class="ri-error-warning-line"></i>
+              <strong>Error:</strong> No se encontró información del candidato.
+              Por favor contacte con el departamento de Recursos Humanos.
+          </div>';
+          return;
+      }
+
+      // Validar que exista información laboral
+      if (is_null($informacionlaboral) || (is_countable($informacionlaboral) && count($informacionlaboral) === 0)) {
+          $informacionlaboral = collect([]);
+      }
+
   @endphp
   
   {{--Validando que el usuario sea de la misma compañia con el candidato--}}
   @foreach ($informacionlaboral as $il)
-   
-    @if ($il['id_empresa']==auth()->user()->empresa_id && $il['activo']=='s')
+
+    @if (isset($il['id_empresa']) && isset($il['activo']) && $il['id_empresa']==auth()->user()->empresa_id && $il['activo']=='s')
       @php
         $misma_empresa=true
-        
+
       @endphp
     @endif
-    
+
  @endforeach
 
 
@@ -65,15 +78,15 @@
             caso contario se visualizara un mensaje de solictude Feedback donde aperecera un boton para enviar 
             correo solicitando el informacion porque no es recomendado--}}
             @foreach ($informacionlaboral as $dtem)
-                
-                @if ($dtem['recomendado']==='n')
+
+                @if (isset($dtem['recomendado']) && $dtem['recomendado']==='n')
                   @php
                             $identidad=$infocandidatos->identidad;
-                            $empresaID=$dtem['id_empresa'];
+                            $empresaID=isset($dtem['id_empresa']) ? $dtem['id_empresa'] : null;
                             $bloqueo_recomendado=true;
                   @endphp
                 @endif
-                
+
             @endforeach
             {{---Si el candidato en su ultimo trabajo le colocaron n en el campo recomendado en la tabla egresos_ingresos, el usuario de la compañia 
               que lo quiere contratar no podra por la condicion lo que si podra hacer es enviar un correo desde la aplicacion con los datos del usuario
