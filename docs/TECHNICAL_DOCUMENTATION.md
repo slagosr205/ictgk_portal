@@ -134,7 +134,132 @@ La navegación se define en `routes/web.php`, donde cada ruta apunta a un contro
 
 ---
 
-## 7. Guía de instalación (local)
+## 7. Controladores y métodos
+### 7.1 AdminController
+- `index(Request $request)`: lista candidatos/ingresos, usa stored procedure con fallback, aplica filtros/paginación y devuelve vista completa o parcial AJAX.
+
+### 7.2 BloqueoController
+- `__construct(CandidatosController $candidatoController)`: inyecta el controlador de candidatos para reutilizar parsing CSV.
+- `actualizarOCrearFicha(array $candidatoData)` *(privado)*: valida datos, normaliza identidad/fecha, bloquea o crea candidato con estado `x`.
+- `actualizacionMasivaBloqueos(array $data)` *(privado)*: procesa múltiples registros de bloqueo.
+- `recibirBloqueos(Request $request)`: procesa CSV y aplica bloqueos en lote.
+
+### 7.3 CandidatosController
+- `compareFields($importedFields, $getTable)`: valida encabezados de CSV vs columnas de tabla.
+- `processData(Request $re)`: parsea CSV manualmente y devuelve filas asociativas.
+- `processData2(Request $re)`: parsea CSV usando `Excel::toArray` y normaliza datos.
+- `validarCamposInsuficientes($datos, $columnHeaders)` *(privado)*: detecta filas con columnas faltantes.
+- `formatUserDate($userDate)` *(privado)*: intenta normalizar fechas a `Y-m-d`.
+- `validarFormatoFecha($datos)` *(privado)*: valida/normaliza fechas y reporta errores.
+- `tieneBloqueoRecomendacion($identidad)` *(privado)*: revisa bloqueo de recomendación en ingresos.
+- `crearOActualizarCandidato($candidatoData)` *(privado)*: crea o actualiza candidato según estado y bloqueo.
+- `insertarCandidatosMasivos($datos)` *(privado)*: procesa candidatos en lote y retorna estados.
+- `validarEstadoIngreso($identidad, $idEmpresaActual)` *(privado)*: determina estado de ingreso para una identidad.
+- `crearOActualizarIngreso($ingresoData)` *(privado)*: crea un ingreso activo.
+- `insertarIngresosMasivos($datos)` *(privado)*: inserta ingresos en lote y retorna estados.
+- `importarIngresos(Request $request)`: importación masiva de ingresos con validaciones y transacción.
+- `recibirCsvCandidatos(Request $request)`: importación masiva de candidatos desde CSV.
+- `GetIndividualInfo($dni)`: obtiene ficha personal y laboral; retorna vista `consultaficha`.
+- `Actualizacion_ficha(Request $re)`: actualiza datos de un candidato desde la ficha.
+- `insertarCandidato(Request $request)`: registra candidato desde formulario.
+- `recibirIngresos(Request $request)`: importación masiva “legacy” de ingresos con validaciones.
+- `exportarEgresos(Request $request)`: exporta egresos a Excel.
+- `importarEgresos(Request $request)`: importa egresos y ejecuta SP de actualización.
+- `hacerIngreso(Request $request)`: crea ingreso manual y activa candidato.
+- `hacerEgreso(Request $request)`: registra egreso y actualiza estados.
+- `lockCandidate(Request $request)`: bloquea candidato y agrega comentarios.
+- `unlockCandidate(Request $request)`: desbloquea candidato y agrega comentarios.
+- `enviarSolicitudRecomendacion(Request $request)`: envía correo de solicitud de desbloqueo.
+- `desbloquearRecomendacion(Request $request)`: actualiza recomendación a “sí”.
+
+### 7.4 DashboardController
+- `index()`: retorna la vista principal del dashboard.
+
+### 7.5 DepartamentosController
+- `index(Request $request)`: lista departamentos con filtros y paginación.
+- `insertDepartament(Request $request)`: crea un departamento (empresa según rol).
+- `insertDepartamentBulk(Request $request)`: importación masiva por filas/CSV.
+- `show($id)`: consulta nombre de departamento.
+- `updateDepartament(Request $request)`: actualiza un departamento.
+
+### 7.6 EgresoController
+- `__construct()`: aplica middleware `auth`.
+- `index()`: carga vista de egresos y empresas permitidas.
+- `listar(Request $request)`: lista empleados activos con filtros y paginación (JSON).
+- `procesar(Request $request)`: procesa egresos en lote con validaciones.
+- `catalogos(Request $request)`: obtiene catálogos de departamentos/puestos/áreas (JSON).
+- `calcularAntiguedad(string $fechaIngreso)` *(privado)*: calcula antigüedad en texto.
+
+### 7.7 EmpresasController
+- `index(Request $request)`: lista empresas con filtros/paginación.
+- `insertCompany(Request $request)`: crea empresa con logo.
+- `insertCompanyBulk(Request $request)`: importación masiva por filas/CSV.
+- `consultingCompany($request)`: devuelve datos de empresa por ID.
+- `updateCompany(Request $request)`: actualiza datos de empresa.
+- `updateCompanyState(Request $request)`: cambia estado activo/inactivo.
+
+### 7.8 HomeController
+- `__construct()`: aplica middleware `auth`.
+- `index()`: carga vista `home` con perfil.
+- `cargarDatosUsuario()`: devuelve datos de empresa/puestos/departamentos (JSON).
+
+### 7.9 InformesController
+- `GetInformes()`: calcula totales/promedios y retorna vista `informes`.
+- `GetData()`: ingresos activos por empresa (JSON).
+- `GetDataOut()`: egresos por empresa (JSON).
+- `GetDataState()`: distribución por edad/estado/género (JSON).
+- `IngresosxEgresos()`: serie temporal ingresos vs egresos (JSON).
+- `RenunciasxGenero()`: renuncias por género (JSON).
+- `GetLastSessionUser()`: usuarios con perfil/empresa (JSON).
+
+### 7.10 LoginController (custom)
+- `__construct()`: aplica middleware `guest` y actualización de sesión.
+- `attemptLogin(Request $request)`: autenticación manual con `Auth`/`Hash`.
+
+### 7.11 PerfilController
+- `create(Request $request)`: crea perfil/rol.
+- `show()`: lista perfiles y retorna vista.
+- `update(Request $request)`: actualiza un campo del perfil (AJAX).
+
+### 7.12 ProfileController
+- `create()`: muestra formulario de perfil.
+- `update()`: actualiza datos del usuario autenticado.
+
+### 7.13 PuestosController
+- `index(Request $request)`: lista puestos con filtros/paginación.
+- `create(Request $request)`: crea un puesto (validaciones por empresa).
+- `dataPuestos($id)`: devuelve datos de un puesto (JSON).
+- `updatePosition(Request $request)`: actualiza un puesto.
+- `puestosxEmpresas($idEmpresas)`: devuelve vista parcial con puestos.
+- `insertPositionsBulk(Request $request)`: importación masiva por filas/CSV.
+
+### 7.14 SessionsController
+- `create()`: vista de inicio de sesión.
+- `store()`: autentica credenciales y redirige.
+- `show()`: envía enlace de reseteo de contraseña.
+- `update()`: procesa reset de contraseña.
+- `destroy()`: cierra sesión.
+
+### 7.15 ValidadorImportacionController
+- `__construct(...)`: inyecta servicios y aplica middleware `auth`.
+- `index()`: muestra vista de validador.
+- `validar(Request $request)`: valida CSV y devuelve errores/resultado.
+- `revalidarRegistro(Request $request)`: revalida un registro individual.
+- `confirmar(Request $request)`: confirma importación y procesa registros.
+- `catalogos()`: devuelve catálogos según permisos (JSON).
+- `descargarPlantilla(Request $request)`: genera plantilla de importación.
+
+### 7.16 Controladores de Auth (Laravel)
+- `Auth\\ConfirmPasswordController`: usa `ConfirmsPasswords`, protege confirmación de contraseña.
+- `Auth\\ForgotPasswordController`: usa `SendsPasswordResetEmails` para enviar correos.
+- `Auth\\LoginController`: usa `AuthenticatesUsers` para login estándar.
+- `Auth\\RegisterController`: registra usuarios, valida datos, lista usuarios y actualiza estado/contraseña.
+- `Auth\\ResetPasswordController`: usa `ResetsPasswords` para restablecer contraseña.
+- `Auth\\VerificationController`: usa `VerifiesEmails` y aplica middlewares de verificación.
+
+---
+
+## 8. Guía de instalación (local)
 1. Clonar el repositorio.
 2. Instalar dependencias de PHP: `composer install`.
 3. Instalar dependencias de frontend: `npm install`.
@@ -146,7 +271,7 @@ La navegación se define en `routes/web.php`, donde cada ruta apunta a un contro
 
 ---
 
-## 8. Creación del ambiente de desarrollo con XAMPP
+## 9. Creación del ambiente de desarrollo con XAMPP
 1. Instalar XAMPP con PHP **8.1+** y MySQL.
 2. Colocar el proyecto dentro de `htdocs` (por ejemplo `C:\\xampp\\htdocs\\ictgk_portal`).
 3. Iniciar **Apache** y **MySQL** desde el panel de XAMPP.
@@ -167,7 +292,7 @@ La navegación se define en `routes/web.php`, donde cada ruta apunta a un contro
 
 ---
 
-## 9. Instalación en un servidor nuevo (producción)
+## 10. Instalación en un servidor nuevo (producción)
 1. Requisitos: PHP **8.1+**, Composer, Node.js/NPM, servidor web (Apache/Nginx) y base de datos.
 2. Clonar o copiar el código en el servidor (por ejemplo `/var/www/ictgk_portal`).
 3. Instalar dependencias de backend en modo producción:
@@ -186,34 +311,34 @@ La navegación se define en `routes/web.php`, donde cada ruta apunta a un contro
 
 ---
 
-## 10. Migraciones (cómo se hacen y se ejecutan)
-### 10.1 Crear una migración
+## 11. Migraciones (cómo se hacen y se ejecutan)
+### 11.1 Crear una migración
 ```bash
 php artisan make:migration create_nombre_tabla_table
 ```
 
-### 10.2 Ejecutar migraciones
+### 11.2 Ejecutar migraciones
 ```bash
 php artisan migrate
 ```
 
-### 10.3 Revertir o refrescar
+### 11.3 Revertir o refrescar
 ```bash
 php artisan migrate:rollback
 php artisan migrate:refresh
 ```
 
-### 10.4 Ver estado de migraciones
+### 11.4 Ver estado de migraciones
 ```bash
 php artisan migrate:status
 ```
 
 ---
 
-## 11. Diccionario de campos (base de datos)
+## 12. Diccionario de campos (base de datos)
 > Fuente: migraciones en `database/migrations/`.
 
-### 11.1 Tabla `users`
+### 12.1 Tabla `users`
 - `id` (PK)
 - `name`
 - `email` (único)
@@ -225,17 +350,17 @@ php artisan migrate:status
 - `remember_token`
 - `created_at`, `updated_at`
 
-### 11.2 Tabla `password_reset_tokens`
+### 12.2 Tabla `password_reset_tokens`
 - `email` (PK)
 - `token`
 - `created_at` (nullable)
 
-### 11.3 Tabla `password_resets` (legacy)
+### 12.3 Tabla `password_resets` (legacy)
 - `email` (index)
 - `token`
 - `created_at` (nullable)
 
-### 11.4 Tabla `failed_jobs`
+### 12.4 Tabla `failed_jobs`
 - `id` (PK)
 - `uuid` (único)
 - `connection`
@@ -244,7 +369,7 @@ php artisan migrate:status
 - `exception`
 - `failed_at`
 
-### 11.5 Tabla `personal_access_tokens`
+### 12.5 Tabla `personal_access_tokens`
 - `id` (PK)
 - `tokenable_type`, `tokenable_id` (morphs)
 - `name`
@@ -254,7 +379,7 @@ php artisan migrate:status
 - `expires_at` (nullable)
 - `created_at`, `updated_at`
 
-### 11.6 Tablas de permisos (Spatie)
+### 12.6 Tablas de permisos (Spatie)
 Configuradas en `config/permission.php`:
 - `roles`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
 - `permissions`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
@@ -263,7 +388,7 @@ Configuradas en `config/permission.php`:
 - `role_has_permissions`: `permission_id`, `role_id`
 > Si `teams` se habilita en la configuración, se agrega `team_id` en tablas de pivote y `roles`.
 
-### 11.7 Tabla `candidatos`
+### 12.7 Tabla `candidatos`
 - `id` (PK)
 - `identidad` (único)
 - `nombre`
@@ -275,7 +400,7 @@ Configuradas en `config/permission.php`:
 - `fecha_nacimiento`
 - `created_at`, `updated_at`
 
-### 11.8 Tabla `egresos_ingresos`
+### 12.8 Tabla `egresos_ingresos`
 - `id` (PK)
 - `identidad`
 - `id_empresa`
@@ -291,7 +416,7 @@ Configuradas en `config/permission.php`:
 - `ComenProhibir`
 - `created_at`, `updated_at`
 
-### 11.9 Tabla `empresas`
+### 12.9 Tabla `empresas`
 - `id` (PK)
 - `nombre`
 - `direccion`
@@ -304,7 +429,7 @@ Configuradas en `config/permission.php`:
 - `logo`
 - `created_at`, `updated_at`
 
-### 11.10 Tabla `perfiles`
+### 12.10 Tabla `perfiles`
 - `id` (PK)
 - `perfilesdescrip`
 - `ingreso` (tinyInteger)
@@ -314,19 +439,19 @@ Configuradas en `config/permission.php`:
 - `usuariosdb` (tinyInteger)
 - `created_at`, `updated_at`
 
-### 11.11 Tabla `departamentos`
+### 12.11 Tabla `departamentos`
 - `id` (PK)
 - `nombredepartamento`
 - `empresa_id`
 - `created_at`, `updated_at`
 
-### 11.12 Tabla `puestos`
+### 12.12 Tabla `puestos`
 - `id` (PK)
 - `nombrepuesto`
 - `departamento_id`
 - `created_at`, `updated_at`
 
-### 11.13 Tabla `event_logs`
+### 12.13 Tabla `event_logs`
 - `id` (PK)
 - `user_id` (FK a `users`, nullable)
 - `event_type`
@@ -335,7 +460,7 @@ Configuradas en `config/permission.php`:
 
 ---
 
-## 12. Consideraciones técnicas
+## 13. Consideraciones técnicas
 - Inertia evita una API REST separada: las páginas se sirven desde Laravel con props JSON.
 - Roles/permisos y autenticación habilitan control de acceso a nivel de rutas y vistas.
 - La combinación de MUI + Bootstrap + Material Dashboard requiere un manejo cuidadoso de estilos para evitar conflictos de CSS.
