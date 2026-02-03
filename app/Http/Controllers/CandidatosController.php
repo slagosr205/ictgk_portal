@@ -705,7 +705,7 @@ class CandidatosController extends Controller
         try {
             //code...
             $this->validate($request, [
-                'identidad' => 'required|regex:/^[0-9]+$/u'
+                'identidad' => 'required|regex:/^[0-9-]+$/u'
             ]);
 
             $identidad = str_replace('-', '', $request->input('identidad'));
@@ -733,7 +733,7 @@ class CandidatosController extends Controller
                 return redirect()->back()->with(['mensaje' => 'ya existe registro']);
             }
         } catch (Exception $exception) {
-            return redirect()->back()->with(['mensaje' => 'se ha producido un error']);
+            return redirect()->back()->with(['mensaje' => 'se ha producido un error: =>'.$exception->getMessage()]);
         }
     }
 
