@@ -58,7 +58,8 @@ class EgresoController extends Controller
             // Query base
             $query = Ingresos::with(['candidato', 'puesto.departamento.empresa'])
                 ->where('activo', 's')
-                ->whereNull('fechaEgreso');
+                ->whereNull('fechaEgreso')
+                ->whereHas('candidato');
 
             // Filtro por empresa (permisos)
             if (!$esAdmin) {

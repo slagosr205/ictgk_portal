@@ -209,7 +209,7 @@ class ValidadorImportacionController extends Controller
                         'direccion' => $datos['direccion'],
                         'generoM_F' => $datos['generoM_F'],
                         'fecha_nacimiento' => $datos['fecha_nacimiento'],
-                        'activo' => 1,
+                        'activo' => 'n',
                         'comentarios' => $datos['comentarios'] ?? '',
                     ];
 
@@ -247,15 +247,8 @@ class ValidadorImportacionController extends Controller
                                 ];
                                 continue;
                             }
-
-                            $ingreso->update([
-                                'id_puesto' => $datos['id_puesto'],
-                                'fechaIngreso' => $datos['fechaIngreso'],
-                                'fechaEgreso' => null,
-                                'area' => $datos['area'],
-                                'activo' => 's',
-                                'Comentario' => $datos['Comentario'] ?? '',
-                            ]);
+                            
+                            $ingreso->create($datosIngreso);
 
                             $reactivados++;
                         } else {
