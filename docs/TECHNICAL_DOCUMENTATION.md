@@ -116,7 +116,25 @@ sequenceDiagram
 
 ---
 
-## 6. Guía de instalación (local)
+## 6. Integración de vistas con controladores
+La navegación se define en `routes/web.php`, donde cada ruta apunta a un controlador y método. Los controladores devuelven vistas Blade mediante `return view('...')`, y el nombre de la vista se resuelve en `resources/views/<ruta>.blade.php`.【F:routes/web.php†L46-L170】
+
+### 6.1 Ejemplos clave de rutas → controladores → vistas
+- `/home` → `HomeController@index` → `resources/views/home.blade.php`.【F:routes/web.php†L63-L67】【F:app/Http/Controllers/HomeController.php†L24-L28】
+- `/dmtables` → `AdminController@index` → `resources/views/Table-inf.blade.php` (o `components/dmtables` en AJAX).【F:routes/web.php†L67-L69】【F:app/Http/Controllers/AdminController.php†L109-L122】
+- `/egresos` → `EgresoController@index` → `resources/views/egresos/index.blade.php`.【F:routes/web.php†L162-L166】【F:app/Http/Controllers/EgresoController.php†L31-L50】
+- `/validador-importacion` → `ValidadorImportacionController@index` → `resources/views/validador-importacion/index.blade.php`.【F:routes/web.php†L141-L152】【F:app/Http/Controllers/ValidadorImportacionController.php†L38-L52】
+- `/puestos` → `PuestosController@index` → `resources/views/puestos.blade.php`.【F:routes/web.php†L103-L106】【F:app/Http/Controllers/PuestosController.php†L14-L62】
+- `/perfiles` → `PerfilController@show` → `resources/views/perfiles.blade.php`.【F:routes/web.php†L93-L99】【F:app/Http/Controllers/PerfilController.php†L27-L33】
+- `/empresas` → `EmpresasController@index` → `resources/views/empresas.blade.php`.【F:routes/web.php†L100-L103】【F:app/Http/Controllers/EmpresasController.php†L14-L41】
+- `/departamentos` → `DepartamentosController@index` → `resources/views/departamentv.blade.php`.【F:routes/web.php†L106-L110】【F:app/Http/Controllers/DepartamentosController.php†L12-L49】
+- `/infopersonal/{dni}` → `CandidatosController@GetIndividualInfo` → `resources/views/consultaficha.blade.php`.【F:routes/web.php†L71-L73】【F:app/Http/Controllers/CandidatosController.php†L660-L695】
+- `/informes` → `InformesController@GetInformes` → `resources/views/informes.blade.php`.【F:routes/web.php†L70-L72】【F:app/Http/Controllers/InformesController.php†L14-L32】
+- `/` (root) → vista directa `resources/views/home.blade.php` o `resources/views/auth/login.blade.php` según autenticación.【F:routes/web.php†L46-L61】
+
+---
+
+## 7. Guía de instalación (local)
 1. Clonar el repositorio.
 2. Instalar dependencias de PHP: `composer install`.
 3. Instalar dependencias de frontend: `npm install`.
@@ -128,7 +146,7 @@ sequenceDiagram
 
 ---
 
-## 7. Creación del ambiente de desarrollo con XAMPP
+## 8. Creación del ambiente de desarrollo con XAMPP
 1. Instalar XAMPP con PHP **8.1+** y MySQL.
 2. Colocar el proyecto dentro de `htdocs` (por ejemplo `C:\\xampp\\htdocs\\ictgk_portal`).
 3. Iniciar **Apache** y **MySQL** desde el panel de XAMPP.
@@ -149,7 +167,7 @@ sequenceDiagram
 
 ---
 
-## 8. Instalación en un servidor nuevo (producción)
+## 9. Instalación en un servidor nuevo (producción)
 1. Requisitos: PHP **8.1+**, Composer, Node.js/NPM, servidor web (Apache/Nginx) y base de datos.
 2. Clonar o copiar el código en el servidor (por ejemplo `/var/www/ictgk_portal`).
 3. Instalar dependencias de backend en modo producción:
@@ -168,34 +186,34 @@ sequenceDiagram
 
 ---
 
-## 9. Migraciones (cómo se hacen y se ejecutan)
-### 9.1 Crear una migración
+## 10. Migraciones (cómo se hacen y se ejecutan)
+### 10.1 Crear una migración
 ```bash
 php artisan make:migration create_nombre_tabla_table
 ```
 
-### 9.2 Ejecutar migraciones
+### 10.2 Ejecutar migraciones
 ```bash
 php artisan migrate
 ```
 
-### 9.3 Revertir o refrescar
+### 10.3 Revertir o refrescar
 ```bash
 php artisan migrate:rollback
 php artisan migrate:refresh
 ```
 
-### 9.4 Ver estado de migraciones
+### 10.4 Ver estado de migraciones
 ```bash
 php artisan migrate:status
 ```
 
 ---
 
-## 10. Diccionario de campos (base de datos)
+## 11. Diccionario de campos (base de datos)
 > Fuente: migraciones en `database/migrations/`.
 
-### 10.1 Tabla `users`
+### 11.1 Tabla `users`
 - `id` (PK)
 - `name`
 - `email` (único)
@@ -207,17 +225,17 @@ php artisan migrate:status
 - `remember_token`
 - `created_at`, `updated_at`
 
-### 10.2 Tabla `password_reset_tokens`
+### 11.2 Tabla `password_reset_tokens`
 - `email` (PK)
 - `token`
 - `created_at` (nullable)
 
-### 10.3 Tabla `password_resets` (legacy)
+### 11.3 Tabla `password_resets` (legacy)
 - `email` (index)
 - `token`
 - `created_at` (nullable)
 
-### 10.4 Tabla `failed_jobs`
+### 11.4 Tabla `failed_jobs`
 - `id` (PK)
 - `uuid` (único)
 - `connection`
@@ -226,7 +244,7 @@ php artisan migrate:status
 - `exception`
 - `failed_at`
 
-### 10.5 Tabla `personal_access_tokens`
+### 11.5 Tabla `personal_access_tokens`
 - `id` (PK)
 - `tokenable_type`, `tokenable_id` (morphs)
 - `name`
@@ -236,7 +254,7 @@ php artisan migrate:status
 - `expires_at` (nullable)
 - `created_at`, `updated_at`
 
-### 10.6 Tablas de permisos (Spatie)
+### 11.6 Tablas de permisos (Spatie)
 Configuradas en `config/permission.php`:
 - `roles`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
 - `permissions`: `id`, `name`, `guard_name`, `created_at`, `updated_at`
@@ -245,7 +263,7 @@ Configuradas en `config/permission.php`:
 - `role_has_permissions`: `permission_id`, `role_id`
 > Si `teams` se habilita en la configuración, se agrega `team_id` en tablas de pivote y `roles`.
 
-### 10.7 Tabla `candidatos`
+### 11.7 Tabla `candidatos`
 - `id` (PK)
 - `identidad` (único)
 - `nombre`
@@ -257,7 +275,7 @@ Configuradas en `config/permission.php`:
 - `fecha_nacimiento`
 - `created_at`, `updated_at`
 
-### 10.8 Tabla `egresos_ingresos`
+### 11.8 Tabla `egresos_ingresos`
 - `id` (PK)
 - `identidad`
 - `id_empresa`
@@ -273,7 +291,7 @@ Configuradas en `config/permission.php`:
 - `ComenProhibir`
 - `created_at`, `updated_at`
 
-### 10.9 Tabla `empresas`
+### 11.9 Tabla `empresas`
 - `id` (PK)
 - `nombre`
 - `direccion`
@@ -286,7 +304,7 @@ Configuradas en `config/permission.php`:
 - `logo`
 - `created_at`, `updated_at`
 
-### 10.10 Tabla `perfiles`
+### 11.10 Tabla `perfiles`
 - `id` (PK)
 - `perfilesdescrip`
 - `ingreso` (tinyInteger)
@@ -296,19 +314,19 @@ Configuradas en `config/permission.php`:
 - `usuariosdb` (tinyInteger)
 - `created_at`, `updated_at`
 
-### 10.11 Tabla `departamentos`
+### 11.11 Tabla `departamentos`
 - `id` (PK)
 - `nombredepartamento`
 - `empresa_id`
 - `created_at`, `updated_at`
 
-### 10.12 Tabla `puestos`
+### 11.12 Tabla `puestos`
 - `id` (PK)
 - `nombrepuesto`
 - `departamento_id`
 - `created_at`, `updated_at`
 
-### 10.13 Tabla `event_logs`
+### 11.13 Tabla `event_logs`
 - `id` (PK)
 - `user_id` (FK a `users`, nullable)
 - `event_type`
@@ -317,7 +335,7 @@ Configuradas en `config/permission.php`:
 
 ---
 
-## 11. Consideraciones técnicas
+## 12. Consideraciones técnicas
 - Inertia evita una API REST separada: las páginas se sirven desde Laravel con props JSON.
 - Roles/permisos y autenticación habilitan control de acceso a nivel de rutas y vistas.
 - La combinación de MUI + Bootstrap + Material Dashboard requiere un manejo cuidadoso de estilos para evitar conflictos de CSS.
