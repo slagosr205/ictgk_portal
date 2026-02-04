@@ -38,7 +38,7 @@
 </head>
 
 @guest
-    <body class="login">
+    <body class="login" style="height: 100vh; overflow: hidden;">
         <main>
             @yield('content')
         </main>
@@ -59,10 +59,16 @@
                 @yield('puestos')
                 @yield('puestosjs')
                 @yield('empresasjs')
-            </main>
+</main>
         </div>
         
        <x-historico /> 
+       
+
+</script>
+
+@php session()->forget(['status', 'message']); @endphp
     </body>
+</html>
 @endguest
 </html>

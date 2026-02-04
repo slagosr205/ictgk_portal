@@ -19,11 +19,9 @@ class Authenticate extends Middleware
         return $request->expectsJson() ? null : route('login');
     }
 
-    public function handle($request, Closure $next, ...$guards)
+public function handle($request, Closure $next, ...$guards)
     {
-      
         if ($this->authenticate($request, $guards) === 'authentication_required') {
-            // La sesión del usuario ha expirado
             return redirect()->guest(route('login'));
         }
 
@@ -32,11 +30,14 @@ class Authenticate extends Middleware
             return redirect('/login')->withErrors(['Your account is blocked.']);
         }
 
-        $user = User::find(Auth::user()->id);
-            
-        $user->last_session = now();
-        $user->save();
-
+        // Solo actualizar última sesión si no es una petición AJAX
+        if (!$request->ajax() && auth()->check()) {
+            $user = User::find(Auth::user()->id);
+            if ($user) {
+                $user->last_session = now();
+                $user->save();
+            }
+        }
 
         return $next($request);
     }

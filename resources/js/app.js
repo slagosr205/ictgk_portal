@@ -31,15 +31,19 @@ if (dtUsuariosEl && dtUsuariosEl.dataset.datatable === 'true') {
     var dtUsuarios = new DataTable('#dtUsuarios');
 }
 //var tbhistoricoempresa=new DataTable('#tbhistoricoempresa');
-if(document.getElementById('mensaje')){
-    let mensaje=document.getElementById('mensaje')
-    Swal.fire({
-        title: "Ejecutado",
-        text: mensaje.innerHTML,
-        
-        icon: "success"
-      });
-}
+// Verificación de librerías
+console.log('Verificando librerías:', {
+    Swal: typeof Swal,
+    bootstrap: typeof bootstrap
+});
+
+// Función simple para mostrar notificaciones si hay elementos ocultos
+document.addEventListener('DOMContentLoaded', function() {
+    const alertElement = document.getElementById('notification-alert');
+    if (alertElement) {
+        console.log('Elemento de alerta encontrado:', alertElement.dataset);
+    }
+});
 
 
 

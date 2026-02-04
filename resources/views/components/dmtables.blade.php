@@ -35,9 +35,44 @@
         </div>
     </div>
 
-    @if(session('mensaje'))
-        <div hidden id="mensaje">{{ session('mensaje') }}</div>
-    @endif
+@php
+// Capturar y limpiar mensajes
+$status = session('status', '');
+$message = session('message', '');
+if(!empty($status) && !empty($message)) {
+    session()->forget(['status', 'message']);
+}
+@endphp
+
+@if(!empty($status) && !empty($message))
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: '{{$status}}',
+                title: '{{$message}}',
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true
+            });
+        } else {
+            setTimeout(function() {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: '{{$status}}',
+                    title: '{{$message}}',
+                    showConfirmButton: false,
+                    timer: 4000,
+                    timerProgressBar: true
+                });
+            }, 1000);
+        }
+    });
+    </script>
+@endif
 
     @if(session('missingFields'))
         <div hidden id="missingFields">campos obligatorios en la plantilla</div>

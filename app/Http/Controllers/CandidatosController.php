@@ -1163,8 +1163,7 @@ class CandidatosController extends Controller
             $candidato = Candidatos::where('identidad', $request->input('identidad'))->get();
             if ($existemismaEmpresa->count() > 0) {
 
-                return redirect()->back()->with(['mensaje' => 'ya existe en esta compañia'])->with(['icon' => 'warning']);
-                // return response()->json(['mensaje'=>'ya existe en esta compañia','icon'=>'warning']);
+                return redirect()->back()->with('msjIngreso', 'ya existe en esta compañia');
             } else {
 
                 $ingreso = new Ingresos();
@@ -1181,10 +1180,10 @@ class CandidatosController extends Controller
                 $updateCandidato->activo = 'n';
                 $updateCandidato->save();
 
-                return redirect()->back()->with(['mensaje' => 'fue ingresado con exito'])->with(['icon' => 'success']);
+                return redirect()->back()->with('msjIngreso', 'fue ingresado con exito');
             }
         } catch (Exception $e) {
-            return redirect()->back()->with(['mensaje' => $e->getMessage(), 'icon' => 'danger']);
+            return redirect()->back()->with('msjIngreso', $e->getMessage());
         }
     }
 

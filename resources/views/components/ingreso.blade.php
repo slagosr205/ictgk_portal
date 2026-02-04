@@ -322,6 +322,10 @@
     const comentarios = document.getElementById('comentarios');
     const caracteresRestantes = document.getElementById('caracteresRestantes');
 
+    // Evitar duplicación de alertas - solo procesar una vez
+    if (window.ingresoFormProcessed) return;
+    window.ingresoFormProcessed = true;
+
     // Contador de caracteres
     if (comentarios && caracteresRestantes) {
       comentarios.addEventListener('input', function() {
