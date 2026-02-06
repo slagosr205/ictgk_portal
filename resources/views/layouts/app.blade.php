@@ -26,7 +26,7 @@
         'resources/js/lib/jquery.counterup.js',  
         'resources/js/chart_custom.js',
         'resources/js/lib/easing.min.js',
-        'resources/js/lib/isotope.pkgd.min.js',
+        //'resources/js/lib/isotope.pkgd.min.js',
         'resources/js/lib/waypoints.min.js',
         'resources/js/empresas.js',
         'resources/js/departamentos.js',

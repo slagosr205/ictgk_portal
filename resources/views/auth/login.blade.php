@@ -37,7 +37,7 @@
                                 <input 
                                     id="email" 
                                     type="email" 
-                                    class="form-control border-start-0 @error('email') is-invalid @enderror" 
+                                    class="form-control border  @error('email') is-invalid @enderror" 
                                     name="email" 
                                     value="{{ old('email') }}" 
                                     placeholder="correo@ejemplo.com"
@@ -65,7 +65,7 @@
                                 <input 
                                     id="password" 
                                     type="password" 
-                                    class="form-control border-start-0 @error('password') is-invalid @enderror" 
+                                    class="form-control border @error('password') is-invalid @enderror" 
                                     name="password" 
                                     placeholder="••••••••"
                                     required 

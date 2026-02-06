@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Imports\CsvImport;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 use Symfony\Component\Mailer\Exception\TransportException;
@@ -642,7 +643,7 @@ class CandidatosController extends Controller
         // Esto indica datos inconsistentes en la base de datos
         if (is_null($candidatos) && !$personalInfo->isEmpty()) {
             // Log para debugging
-            \Log::warning("Ingresos sin candidato asociado detectados", [
+            Log::warning("Ingresos sin candidato asociado detectados", [
                 'identidad' => $newdni,
                 'cantidad_ingresos' => $personalInfo->count(),
                 'ingresos_ids' => $personalInfo->pluck('id')->toArray()
@@ -676,7 +677,7 @@ class CandidatosController extends Controller
 
         // Validación adicional para asegurar que tenemos toda la información necesaria
         if (is_null($empresaActual)) {
-            \Log::warning("No se pudo determinar la empresa actual", [
+            Log::warning("No se pudo determinar la empresa actual", [
                 'identidad' => $newdni,
                 'tiene_ingreso' => !is_null($ingreso),
             ]);
