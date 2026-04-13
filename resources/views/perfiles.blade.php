@@ -22,6 +22,7 @@
                         <th>Bloqueo</th>
                         <th>Gestión Tablas</th>
                         <th>visualizar Informes</th>
+                        <th>Seguridad</th>
                         
                     </tr>
                 </thead>
@@ -89,6 +90,22 @@
                                     <label class="form-check-label" for="chk_visualizarinformes">Permitido</label>
                                 </div></td>
                             @endif
+
+                            @if (($pf->seguridad ?? 0) == 0)
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input chkpermiso" type="checkbox" role="switch" id="chk_seguridad">
+                                        <label class="form-check-label" for="chk_seguridad">No permitido</label>
+                                    </div>
+                                </td>
+                            @else
+                                <td>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input chkpermiso" type="checkbox" role="switch" id="chk_seguridad" checked>
+                                        <label class="form-check-label" for="chk_seguridad">Permitido</label>
+                                    </div>
+                                </td>
+                            @endif
                                 
                         </tr>
                     @endforeach
@@ -150,6 +167,16 @@
                         <select name="visualizarinformes" id="visualizarinformes" class="form-select">
                             <option value="1">permitido</option>
                             <option value="0">no permitido</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mt-2">
+                    <div class="col-md-4">
+                        <label for="seguridad">Acceso Seguridad</label>
+                        <select name="seguridad" id="seguridad" class="form-select">
+                            <option value="1">permitido</option>
+                            <option value="0" selected>no permitido</option>
                         </select>
                     </div>
                 </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PerfilModel;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
 class LoginController extends Controller
@@ -35,5 +36,22 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    /**
+     * The user has been authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Contracts\Auth\Guard  $user
+     * @return \Illuminate\Http\Response
+     */
+    protected function authenticated($request, $user)
+    {
+        if ($user->perfil_id) {
+            $perfil = PerfilModel::find($user->perfil_id);
+            if ($perfil && $perfil->perfilesdescrip === 'seguridad') {
+                return redirect()->route('seguridad.index');
+            }
+        }
     }
 }

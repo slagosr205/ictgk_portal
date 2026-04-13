@@ -356,17 +356,6 @@
 @stop
 
 <style>
-:root {
-    --primary: #32C36C;
-    --light: #F6F7F8;
-    --dark: #1A2A36;
-    --danger: #e74c3c;
-    --success: #32C36C;
-    --warning: #dce442;
-    --text-primary: #2c3e50;
-    --text-secondary: #6c757d;
-    --border: #e1e8ed;
-}
 
 .empresas-page {
     max-width: 1200px;
@@ -379,7 +368,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 1.5rem;
-    background: linear-gradient(135deg, rgba(50, 195, 108, 0.12), rgba(26, 42, 54, 0.08));
+    background: linear-gradient(135deg, rgb(var(--brand-primary-rgb) / 0.12), rgb(var(--brand-dark-rgb) / 0.08));
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.5rem;
@@ -454,7 +443,7 @@
 .btn-modern.btn-secondary:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: rgba(50, 195, 108, 0.08);
+    background: rgb(var(--brand-primary-rgb) / 0.08);
 }
 
 .btn-modern.btn-warning {
@@ -530,7 +519,7 @@
 .badge-id {
     display: inline-block;
     padding: 0.2rem 0.6rem;
-    background: rgba(50, 195, 108, 0.12);
+    background: rgb(var(--brand-primary-rgb) / 0.12);
     color: var(--primary);
     border-radius: 999px;
     font-weight: 600;
@@ -560,7 +549,7 @@
 .btn-scroll:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: rgba(50, 195, 108, 0.08);
+    background: rgb(var(--brand-primary-rgb) / 0.08);
 }
 
 .pagination-container {
@@ -742,7 +731,7 @@
 .form-control:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(50, 195, 108, 0.12);
+    box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.12);
 }
 
 .modal-footer-modern {

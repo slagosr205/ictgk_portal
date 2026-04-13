@@ -468,18 +468,7 @@ if(!empty($status) && !empty($message)) {
 </div>
 
 <style>
-:root {
-    --primary: #32C36C;
-    --light: #F6F7F8;
-    --dark: #1A2A36;
-    --color-tertiary: #dce442;
-    --danger: #e74c3c;
-    --success: #32C36C;
-    --warning: #dce442;
-    --text-primary: #2c3e50;
-    --text-secondary: #6c757d;
-    --border: #e1e8ed;
-}
+
 
 * {
     margin: 0;
@@ -587,7 +576,7 @@ if(!empty($status) && !empty($message)) {
 .search-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(50, 195, 108, 0.1);
+    box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.1);
 }
 
 /* Loading Overlay */
@@ -620,7 +609,7 @@ if(!empty($status) && !empty($message)) {
     height: 16px;
     margin-bottom: 10px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(50, 195, 108, 0.08), rgba(26, 42, 54, 0.08));
+    background: linear-gradient(90deg, rgb(var(--brand-primary-rgb) / 0.08), rgb(var(--brand-dark-rgb) / 0.08));
     overflow: hidden;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
 }
@@ -747,7 +736,7 @@ if(!empty($status) && !empty($message)) {
 .td-id .badge-id {
     display: inline-block;
     padding: 0.375rem 0.75rem;
-    background: rgba(50, 195, 108, 0.1);
+    background: rgb(var(--brand-primary-rgb) / 0.1);
     color: var(--primary);
     border-radius: 6px;
     font-weight: 600;
@@ -801,7 +790,7 @@ if(!empty($status) && !empty($message)) {
     border-color: var(--primary);
     color: var(--primary);
     transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(50, 195, 108, 0.2);
+    box-shadow: 0 2px 8px rgb(var(--brand-primary-rgb) / 0.2);
 }
 
 .text-muted-subtle {
@@ -1156,7 +1145,7 @@ if(!empty($status) && !empty($message)) {
 .modern-form .form-control:focus,
 .modern-form .form-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(50, 195, 108, 0.1);
+    box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.1);
     outline: none;
 }
 

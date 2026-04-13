@@ -106,7 +106,7 @@
 
 .lock-textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(50, 195, 108, 0.12);
+  box-shadow: 0 0 0 3px rgb(var(--brand-primary-rgb) / 0.12);
   outline: none;
 }
 
@@ -170,4 +170,3 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
-

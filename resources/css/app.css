@@ -9,11 +9,47 @@
 }
 
 :root {
-    --primary: #32C36C;
-    --light: #F6F7F8;
-    --dark: #1A2A36;
-    --color-terciay: #dce442;
+    /* Brand tokens (set/overridden from Blade via $branding['cssVars']). */
+    --brand-primary: #32C36C;
+    --brand-secondary: #1A2A36;
+    --brand-accent: #DCE442;
+    --brand-light: #F6F7F8;
+    --brand-dark: #1A2A36;
+    --brand-danger: #E74C3C;
+    --brand-success: #32C36C;
+    --brand-warning: #DCE442;
+    --brand-text-primary: #2C3E50;
+    --brand-text-secondary: #6C757D;
+    --brand-border: #E1E8ED;
+
+    /* Legacy tokens used across the existing CSS. */
+    --primary: var(--brand-primary);
+    --secondary: var(--brand-secondary);
+    --light: var(--brand-light);
+    --dark: var(--brand-dark);
+    --danger: var(--brand-danger);
+    --success: var(--brand-success);
+    --warning: var(--brand-warning);
+    --text-primary: var(--brand-text-primary);
+    --text-secondary: var(--brand-text-secondary);
+    --border: var(--brand-border);
+
+    /* Keep both spellings used across the codebase */
+    --color-terciay: var(--brand-accent);
+    --color-tertiary: var(--brand-accent);
     --navbar-height: 75px;
+
+    /* Images */
+    --brand-login-bg: none;
+
+    /* Bootstrap 5 CSS vars (so Bootstrap components follow the brand) */
+    --bs-primary: var(--brand-primary);
+    --bs-primary-rgb: var(--brand-primary-rgb);
+    --bs-info: var(--brand-primary);
+    --bs-info-rgb: var(--brand-primary-rgb);
+    --bs-link-color: var(--brand-primary);
+    --bs-link-hover-color: var(--brand-secondary);
+    --bs-border-color: var(--brand-border);
 }
 
 @font-face {
@@ -33,7 +69,7 @@ html, body {
 }
 
 /* Layout Autenticado */
-body:not(.login):not(.login2) {
+body:not(.login):not(.login2):not(.embed) {
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -73,8 +109,11 @@ body.back-color {
 }
 
 body.login {
-    background-image: url('/public/storage/PortalAltia-04.jpg');
+    background-image: var(--brand-login-bg);
     background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: var(--brand-dark);
     height: 100vh;
     display: flex;
     align-items: center;
@@ -82,7 +121,8 @@ body.login {
 }
 
 body.login2 {
-    background-image: url('/public/storage/Portal-01.png');
+    /* Optional secondary login background if you still use login2 */
+    background-image: var(--brand-login-bg);
     background-size: cover;
     height: 100vh;
     display: flex;
@@ -196,14 +236,14 @@ main::-webkit-scrollbar-track,
 main::-webkit-scrollbar-thumb,
 .card-body::-webkit-scrollbar-thumb,
 .table-responsive::-webkit-scrollbar-thumb {
-    background: #072132;
+    background: var(--brand-dark);
     border-radius: 10px;
 }
 
 main::-webkit-scrollbar-thumb:hover,
 .card-body::-webkit-scrollbar-thumb:hover,
 .table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #0a2e45;
+    background: var(--brand-secondary);
 }
 
 /* ========================================
@@ -2095,4 +2135,3 @@ tr:nth-child(even) {
         opacity: 0.2;
     }
 }
-

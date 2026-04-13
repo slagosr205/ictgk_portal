@@ -175,7 +175,7 @@
     }
 
     #modalEdicion h6 {
-        color: #072132;
+        color: var(--brand-dark);
         font-weight: 600;
     }
 

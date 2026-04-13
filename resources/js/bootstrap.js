@@ -1,4 +1,4 @@
-import 'bootstrap';
+import * as bootstrap from 'bootstrap';
 
 import jQuery, { data } from 'jquery';
 /**
@@ -14,6 +14,10 @@ window.$ = jQuery;
 
 window.jQuery = jQuery
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+// Expose Bootstrap for Blade inline scripts/modals/tooltips.
+// Several pages rely on window.bootstrap.*
+window.bootstrap = bootstrap;
 
 /**
  * Echo exposes an expressive API for subscribing to channels and listening

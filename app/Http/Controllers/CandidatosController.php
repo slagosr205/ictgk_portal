@@ -3,35 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Events\RegistroActualizado;
-use App\Http\Controllers\Controller;
-use App\Models\Ingresos;
-use App\Models\Egresos;
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
-
-use App\Models\Candidatos;
-use App\Models\Empresas;
-use App\Models\User;
-
-use Illuminate\Validation\ValidationException;
-use App\Mail\EnviarSolicitudCandidato;
-use Exception;
-
 use App\Exports\ExportTemplateOut;
-use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\DB;
-
 use App\Imports\CsvImport;
+use App\Mail\EnviarSolicitudCandidato;
+use App\Models\Candidatos;
+use App\Models\Egresos;
+use App\Models\Empresas;
+use App\Models\Ingresos;
+use App\Models\User;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\Mailer\Exception\TransportException;
 
 class CandidatosController extends Controller
 {
-
     /**
      * funcion que valida los campos que debe traer las plantillas de ingresos
      */
@@ -43,20 +35,19 @@ class CandidatosController extends Controller
         // Verificar si falta algún campo
         $filteredTableFields = array_diff($tableFields, $fieldsToExclude);
         $missingFields = array_diff($filteredTableFields, $importedFields);
-        if (!empty($missingFields)) {
+        if (! empty($missingFields)) {
             return $missingFields;
         } else {
             return 'Todos los campos están presentes.';
         }
     }
+
     /**
      * funcion que permitira el procesamiento de los datos que vienen de un archivo csv para hacer importaciones masivas
      */
-
-
     public function processData(Request $re): array
     {
-        $datos = array();
+        $datos = [];
         // Verifica si la solicitud tiene un archivo CSV adjunto
         if ($re->hasFile('archivo_csv')) {
             // Obtiene el archivo CSV
@@ -73,9 +64,7 @@ class CandidatosController extends Controller
                     $contenidoCsv = preg_replace('/[^\x{0009}\x{000A}\x{000D}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]/u', '', $contenidoCsv);
                 }
 
-
-
-                /*REVISAR */
+                /* REVISAR */
                 $contenidoCsv = str_replace(' "', '"', $contenidoCsv);
                 $contenidoCsv = str_replace('" ', '"', $contenidoCsv);
                 // Aquí puedes hacer lo que quieras con $contenidoCsv
@@ -87,7 +76,7 @@ class CandidatosController extends Controller
                 for ($i = 1; $i < count($lineas); $i++) {
                     $linea = $lineas[$i];
                     // Ignorar líneas vacías
-                    if (!empty(trim($linea))) {
+                    if (! empty(trim($linea))) {
                         // Convertir la línea en un array
                         $datosLinea = str_getcsv($linea);
 
@@ -101,20 +90,19 @@ class CandidatosController extends Controller
                         }
                         // Agregar la fila al array de datos
 
-
                     }
                 }
             } catch (Exception $exception) {
                 return ['error' => 'error al procesar el csv'];
             }
         }
+
         return $datos;
     }
 
-
     public function processData2(Request $re): array
     {
-        if (!$re->hasFile('archivo_csv')) {
+        if (! $re->hasFile('archivo_csv')) {
             return ['error' => 'No se adjuntó un archivo CSV'];
         }
 
@@ -124,7 +112,7 @@ class CandidatosController extends Controller
             $datos = Excel::toArray(new CsvImport, $archivoCsv);
 
             // Verifica si hay datos y convierte a un array asociativo
-            if (!empty($datos[0])) {
+            if (! empty($datos[0])) {
                 // El primer elemento contiene los encabezados
                 $headers = array_map('trim', $datos[0][0]);
 
@@ -132,7 +120,7 @@ class CandidatosController extends Controller
 
                 // Procesar las filas de datos (ignorando la primera que son los encabezados)
                 foreach (array_slice($datos[0], 1) as $row) {
-                    if (!empty(array_filter($row))) { // Ignorar filas vacías
+                    if (! empty(array_filter($row))) { // Ignorar filas vacías
                         // Verificar que cada elemento sea una cadena antes de aplicar trim
                         $trimmedRow = array_map(function ($value) {
                             return is_string($value) ? trim($value) : $value;  // Solo aplica trim si es una cadena
@@ -154,11 +142,11 @@ class CandidatosController extends Controller
 
             return []; // Si no hay datos válidos
         } catch (\Exception $exception) {
-            return ['error' => 'Error al procesar el CSV: ' . $exception->getMessage()];
+            return ['error' => 'Error al procesar el CSV: '.$exception->getMessage()];
         }
     }
 
-    //Validación de Campos Insuficientes
+    // Validación de Campos Insuficientes
 
     private function validarCamposInsuficientes($datos, $columnHeaders)
     {
@@ -180,13 +168,13 @@ class CandidatosController extends Controller
         return $indicesConMenosDe13Campos;
     }
 
-
     private function formatUserDate($userDate)
     {
         // Primero intentamos con el parseo libre de Carbon
         try {
             // Intentamos analizar la fecha usando Carbon
             $date = Carbon::parse($userDate);
+
             // Devolvemos la fecha en formato YYYY-MM-DD para la base de datos
             return $date->format('Y-m-d');
         } catch (\Exception $e) {
@@ -209,6 +197,7 @@ class CandidatosController extends Controller
         foreach ($formats as $format) {
             try {
                 $date = Carbon::createFromFormat($format, $userDate);
+
                 // Si se logra parsear, devolvemos la fecha en el formato estándar de base de datos
                 return $date->format('Y-m-d');
             } catch (\Exception $e) {
@@ -221,8 +210,7 @@ class CandidatosController extends Controller
         return null;
     }
 
-
-    //Validación de Formato de Fechas
+    // Validación de Formato de Fechas
 
     private function validarFormatoFecha($datos)
     {
@@ -233,7 +221,7 @@ class CandidatosController extends Controller
             $datos[$indice]['identidad'] = str_replace('-', '', $fila['identidad']);
             $lineNumber = $indice + 1;
             // Comprobar si ambas fechas (fecha_nacimiento y fechaIngreso) están presentes
-            if (!empty($fila['fecha_nacimiento']) && !empty($fila['fechaIngreso'])) {
+            if (! empty($fila['fecha_nacimiento']) && ! empty($fila['fechaIngreso'])) {
                 // Intentamos formatear ambas fechas utilizando la función 'formatUserDate'
                 $fecha_nacimiento = $this->formatUserDate($fila['fecha_nacimiento']);
                 $fechaIngreso = $this->formatUserDate($fila['fechaIngreso']);
@@ -247,16 +235,16 @@ class CandidatosController extends Controller
                     // Si no se pudo convertir alguna de las fechas, agregar al registro de error indicando qué campo es el que falló
                     $mensajeError = 'Las fechas deben estar en un formato válido (dd/mm/yyyy, mm/dd/yyyy, o similares)';
 
-                    if (!$fecha_nacimiento) {
-                        $mensajeError .= ' - Error en "fecha_nacimiento". Valor recibido: ' . $fila['fecha_nacimiento'];
+                    if (! $fecha_nacimiento) {
+                        $mensajeError .= ' - Error en "fecha_nacimiento". Valor recibido: '.$fila['fecha_nacimiento'];
                     }
-                    if (!$fechaIngreso) {
-                        $mensajeError .= ' - Error en "fechaIngreso". Valor recibido: ' . $fila['fechaIngreso'];
+                    if (! $fechaIngreso) {
+                        $mensajeError .= ' - Error en "fechaIngreso". Valor recibido: '.$fila['fechaIngreso'];
                     }
                     $registrosconFechamalForma[] = [
                         'identidad' => $datos[$indice]['identidad'],
                         'nombre' => $datos[$indice]['nombre'],
-                        'mensaje' =>  $mensajeError,
+                        'mensaje' => $mensajeError,
                         'LineNumber' => $lineNumber,
                     ];
                 }
@@ -269,14 +257,13 @@ class CandidatosController extends Controller
 
     /**
      * un campo bloqueo_recomendacion en la tabla Candidatos que indica si un candidato tiene una restricción de recomendación.
-     * Si el bloqueo de recomendación se obtiene de otra tabla o de un conjunto de datos diferente, 
+     * Si el bloqueo de recomendación se obtiene de otra tabla o de un conjunto de datos diferente,
      * dime de dónde proviene $validarRecomendacion en tu código original y ajusto la función según corresponda. 🚀
      */
     private function tieneBloqueoRecomendacion($identidad)
     {
         return Ingresos::where('identidad', $identidad)->where('bloqueo_recomendado', 's')->exists();
     }
-
 
     private function crearOActualizarCandidato($candidatoData)
     {
@@ -291,6 +278,7 @@ class CandidatosController extends Controller
             // Si el candidato está activo, actualizar a 'n'
             if ($existingCandidato->activo === 's') {
                 $existingCandidato->update(['activo' => 'n']);
+
                 return ['estado' => 'registro actualizado', 'candidato' => $existingCandidato];
             }
 
@@ -299,9 +287,9 @@ class CandidatosController extends Controller
 
         // Si no existe, crearlo con 'activo' => 'n'
         $nuevoCandidato = Candidatos::create(array_merge($candidatoData, ['activo' => 'n']));
+
         return ['estado' => 'registro nuevo', 'candidato' => $nuevoCandidato];
     }
-
 
     private function insertarCandidatosMasivos($datos)
     {
@@ -312,13 +300,12 @@ class CandidatosController extends Controller
             $resultados[] = [
                 'identidad' => $candidatoData['identidad'],
                 'estado' => $resultado['estado'],
-                'nombre' => $candidatoData['nombre'] . ' ' . $candidatoData['apellido']
+                'nombre' => $candidatoData['nombre'].' '.$candidatoData['apellido'],
             ];
         }
 
         return $resultados;
     }
-
 
     private function validarEstadoIngreso($identidad, $idEmpresaActual)
     {
@@ -365,11 +352,6 @@ class CandidatosController extends Controller
         return 'Registro nuevo';
     }
 
-
-
-
-
-
     private function crearOActualizarIngreso($ingresoData)
     {
         return Ingresos::create([
@@ -378,10 +360,9 @@ class CandidatosController extends Controller
             'fechaIngreso' => $ingresoData['fechaIngreso'],
             'area' => $ingresoData['area'],
             'id_puesto' => $ingresoData['id_puesto'],
-            'activo' => 's' // Se marca como activo el nuevo ingreso
+            'activo' => 's', // Se marca como activo el nuevo ingreso
         ]);
     }
-
 
     private function insertarIngresosMasivos($datos)
     {
@@ -399,6 +380,7 @@ class CandidatosController extends Controller
                     $ingresosCreados[] = $ingresoCreado;
                 } catch (\Exception $e) {
                     DB::rollBack();
+
                     return response()->json(['error' => 'Error al guardar los ingresos'], 500);
                 }
             }
@@ -406,19 +388,15 @@ class CandidatosController extends Controller
             $datosRegistroestado[] = [
                 'identidad' => $ingresoData['identidad'],
                 'estadoIngreso' => $estadoIngreso,
-                'nombre' => $ingresoData['nombre'] . ' ' . $ingresoData['apellido']
+                'nombre' => $ingresoData['nombre'].' '.$ingresoData['apellido'],
             ];
         }
 
         return [
             'ingresos' => $ingresosCreados,
-            'estados' => $datosRegistroestado
+            'estados' => $datosRegistroestado,
         ];
     }
-
-
-
-
 
     public function importarIngresos(Request $request)
     {
@@ -431,13 +409,12 @@ class CandidatosController extends Controller
             //  $datos = $this->processData($request);
             $datos = $this->processData2($request);
 
-
             // O btener ID de la transacción en MySQL
-            $transactionId = DB::select("SELECT CONNECTION_ID() AS connection_id")[0]->connection_id;
+            $transactionId = DB::select('SELECT CONNECTION_ID() AS connection_id')[0]->connection_id;
 
             $importedFields = array_keys($datos[0]);
-            $candidato = new Candidatos();
-            $ingresos = new Ingresos();
+            $candidato = new Candidatos;
+            $ingresos = new Ingresos;
 
             $table_candidate = array_diff(Schema::getColumnListing($candidato->getTable()), ['comentarios', 'id', 'updated_at', 'created_at', 'activo']);
             $table_input = ['id_empresa', 'fechaIngreso', 'area', 'id_puesto'];
@@ -456,11 +433,11 @@ class CandidatosController extends Controller
             }
 
             // Validar formato de fechas
-            list($datos, $registrosconFechamalForma) = $this->validarFormatoFecha($datos);
+            [$datos, $registrosconFechamalForma] = $this->validarFormatoFecha($datos);
 
             if (count($registrosconFechamalForma) > 0) {
                 return response()->json([
-                    'error' => "Formato de fecha incorrecto en el registro",
+                    'error' => 'Formato de fecha incorrecto en el registro',
                     'indice' => $registrosconFechamalForma,
                     'tipoError' => 'fecha',
                 ], 400);
@@ -472,7 +449,7 @@ class CandidatosController extends Controller
                 'tipo_transaccion' => 'inicio',
                 'estado' => 'en progreso',
                 'mensaje' => "Inicio de transacción ID: $transactionId",
-                'created_at' => now()
+                'created_at' => now(),
             ]);
 
             // Insertar candidatos masivamente
@@ -484,7 +461,7 @@ class CandidatosController extends Controller
                     'tipo_transaccion' => 'candidato',
                     'estado' => $candidato['estado'],
                     'mensaje' => "Candidato procesado en transacción ID: $transactionId",
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]);
             }
 
@@ -498,7 +475,7 @@ class CandidatosController extends Controller
                     'tipo_transaccion' => 'ingreso',
                     'estado' => 'Ingreso registrado',
                     'mensaje' => "Ingreso procesado en transacción ID: $transactionId",
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]);
             }
 
@@ -508,20 +485,19 @@ class CandidatosController extends Controller
         } catch (Exception $e) {
             DB::rollBack(); // Revertir la transacción en caso de error
             $registrosProblematicos[] = ['registro' => $datos, 'error' => $e->getMessage()];
-            $transactionId = DB::select("SELECT CONNECTION_ID() AS connection_id")[0]->connection_id;
+            $transactionId = DB::select('SELECT CONNECTION_ID() AS connection_id')[0]->connection_id;
 
             DB::table('transactions_logo')->insert([
                 'identidad' => null,
                 'tipo_transaccion' => 'error',
                 'estado' => 'fallido',
-                'mensaje' => "Error en transacción ID $transactionId: " . $e->getMessage(),
-                'created_at' => now()
+                'mensaje' => "Error en transacción ID $transactionId: ".$e->getMessage(),
+                'created_at' => now(),
             ]);
+
             return response()->json(['error' => $e->getMessage(), 'tipoError' => 'exception'], 400);
         }
     }
-
-
 
     /**
      * Funcion que permitira procesar la importacion masiva de registros para la tabla candidatos, si no existe el campo activo se iniciara en s por la disponibilidad
@@ -534,9 +510,9 @@ class CandidatosController extends Controller
         if ($request->hasFile('archivo_csv')) {
             $datos = $this->processData($request);
             $importedFields = array_keys($datos[0]);
-            $candidato = new Candidatos();
+            $candidato = new Candidatos;
 
-            $ingresos = new Ingresos();
+            $ingresos = new Ingresos;
 
             $missingFields = $this->compareFields($importedFields, $candidato->getTable());
 
@@ -544,13 +520,13 @@ class CandidatosController extends Controller
             $missingFields2 = $this->compareFields($importedFields, $ingresos->getTable());
             $vlor2 = is_array($missingFields2);
 
-            //validar que todos los campos sean obligatorio
+            // validar que todos los campos sean obligatorio
             if ($vlor) {
                 return redirect()->back()->with(['missingFields' => $missingFields], 400);
             }
             foreach ($datos as $indice => $fila) {
-                if (!empty($fila['fecha_nacimiento'])) {
-                    $fecha_nacimiento = date_create_from_format("m/d/Y", $fila['fecha_nacimiento']);
+                if (! empty($fila['fecha_nacimiento'])) {
+                    $fecha_nacimiento = date_create_from_format('m/d/Y', $fila['fecha_nacimiento']);
                     $datos[$indice]['fecha_nacimiento'] = date_format($fecha_nacimiento, 'Y-m-d');
                 }
 
@@ -559,16 +535,16 @@ class CandidatosController extends Controller
 
             $datos_filtrados = array_filter($datos, function ($item) {
                 $noEmpty = count($item) == count((array_filter(array_map('trim', $item))));
+
                 return $noEmpty;
             });
-
 
             try {
 
                 foreach ($datos_filtrados as $dt) {
                     $existe = Candidatos::where('identidad', $dt['identidad'])->exists();
 
-                    if (!$existe) {
+                    if (! $existe) {
                         Candidatos::create($dt);
                         $dt['estado'] = 'exitoso';
                         $nuevoRegistros = [
@@ -588,9 +564,9 @@ class CandidatosController extends Controller
                 return redirect()->back()->with('mensaje', 'Archivo CSV subido con éxito')->with('datos', $datosCombinados);
             } catch (Exception $e) {
                 $registrosProblematicos[] = ['registro' => $fila, 'error' => $e->getMessage()];
+
                 return redirect()->back()->with('mensaje', 'Archivo CSV subido con éxito')->with('datos', $datos);
             }
-
 
             // Retorna una respuesta, por ejemplo, un mensaje de éxito
 
@@ -600,17 +576,12 @@ class CandidatosController extends Controller
         }
     }
 
-
-
-
-
-
     /**
-     * Función que permite obtener la informacion individual del colaborador, se obtiene informacion personal, informacion laboral y se manda la informacion de la empresa 
+     * Función que permite obtener la informacion individual del colaborador, se obtiene informacion personal, informacion laboral y se manda la informacion de la empresa
      * que esta consultando, funciona con tecnica ajax.
      * El tipo de solicitud es GET, recibe como parametro la IDENTIDAD del colaborador a consultar
      */
-    public function GetIndividualInfo($dni)
+    public function GetIndividualInfo(Request $request, $dni)
     {
         $newdni = str_replace('-', '', $dni);
 
@@ -629,24 +600,22 @@ class CandidatosController extends Controller
             ->orderBy('egresos_ingresos.created_at', 'desc')
             ->get();
 
-
-
         // ❌ No existe en ningún lado
         if (is_null($candidatos) && $personalInfo->isEmpty()) {
             return response()->json([
                 'response' => 'No se encontró información para el DNI proporcionado',
-                'code' => 404
+                'code' => 404,
             ], 404);
         }
 
         // ⚠️ Caso especial: Existen ingresos pero NO existe el candidato
         // Esto indica datos inconsistentes en la base de datos
-        if (is_null($candidatos) && !$personalInfo->isEmpty()) {
+        if (is_null($candidatos) && ! $personalInfo->isEmpty()) {
             // Log para debugging
-            Log::warning("Ingresos sin candidato asociado detectados", [
+            Log::warning('Ingresos sin candidato asociado detectados', [
                 'identidad' => $newdni,
                 'cantidad_ingresos' => $personalInfo->count(),
-                'ingresos_ids' => $personalInfo->pluck('id')->toArray()
+                'ingresos_ids' => $personalInfo->pluck('id')->toArray(),
             ]);
 
             return view('error-datos-inconsistentes', [
@@ -660,7 +629,7 @@ class CandidatosController extends Controller
         $empresas = Empresas::all();
 
         $ingreso = Ingresos::with([
-            'puesto.departamento.empresa'
+            'puesto.departamento.empresa',
         ])
             ->where('identidad', $newdni)
             ->where('activo', 's')
@@ -671,22 +640,24 @@ class CandidatosController extends Controller
 
         if ($ingreso && $ingreso->puesto && $ingreso->puesto->departamento && $ingreso->puesto->departamento->empresa) {
             $empresaActual = $ingreso->puesto->departamento->empresa;
-        } elseif (!$personalInfo->isEmpty() && $personalInfo->first()->id_empresa) {
+        } elseif (! $personalInfo->isEmpty() && $personalInfo->first()->id_empresa) {
             $empresaActual = Empresas::find($personalInfo->first()->id_empresa);
         }
 
         // Validación adicional para asegurar que tenemos toda la información necesaria
         if (is_null($empresaActual)) {
-            Log::warning("No se pudo determinar la empresa actual", [
+            Log::warning('No se pudo determinar la empresa actual', [
                 'identidad' => $newdni,
-                'tiene_ingreso' => !is_null($ingreso),
+                'tiene_ingreso' => ! is_null($ingreso),
             ]);
         }
 
         // ✅ Existe candidato (con o sin ingresos)
-        return view('consultaficha', [
+        $view = $request->boolean('embed') ? 'consultaficha-embed' : 'consultaficha';
+
+        return view($view, [
             'laboralInfo' => $personalInfo, // ya viene filtrado
-            'candidatos'  => $candidatos,
+            'candidatos' => $candidatos,
             'DatosEmpresa' => $empresas,
             'empresaActual' => $empresaActual,
         ]);
@@ -707,6 +678,7 @@ class CandidatosController extends Controller
         $candidatos->save();
         if ($candidatos->wasChanged()) {
             event(new RegistroActualizado($candidatos));
+
             return response()->json(['mensaje' => 'se ha actualizado con exito!', 'icon' => 'success', 'titulo' => 'Actualizacion Exitosa']);
         } else {
             return response()->json(['mensaje' => 'No se pudo actualizar los datos!', 'icon' => 'warning', 'titulo' => 'Hubo un error!']);
@@ -716,9 +688,9 @@ class CandidatosController extends Controller
     public function insertarCandidato(Request $request)
     {
         try {
-            //code...
+            // code...
             $this->validate($request, [
-                'identidad' => 'required|regex:/^[0-9-]+$/u'
+                'identidad' => 'required|regex:/^[0-9-]+$/u',
             ]);
 
             $identidad = str_replace('-', '', $request->input('identidad'));
@@ -740,17 +712,14 @@ class CandidatosController extends Controller
                 ];
                 $newCandidate = Candidatos::create($candidato);
 
-
                 return redirect()->back()->with(['mensaje' => 'se a creado el nuevo registro ']);
             } else {
                 return redirect()->back()->with(['mensaje' => 'ya existe registro']);
             }
         } catch (Exception $exception) {
-            return redirect()->back()->with(['mensaje' => 'se ha producido un error: =>' . $exception->getMessage()]);
+            return redirect()->back()->with(['mensaje' => 'se ha producido un error: =>'.$exception->getMessage()]);
         }
     }
-
-
 
     public function recibirIngresos(Request $request)
     {
@@ -766,17 +735,15 @@ class CandidatosController extends Controller
             $datos = $this->processData($request);
 
             $importedFields = array_keys($datos[0]);
-            $candidato = new Candidatos();
-            $ingresos = new Ingresos();
+            $candidato = new Candidatos;
+            $ingresos = new Ingresos;
 
             $table_candidate = array_diff(Schema::getColumnListing($candidato->getTable()), ['comentarios', 'id', 'updated_at', 'created_at', 'activo']);
             $table_input = ['id_empresa', 'fechaIngreso', 'area', 'id_puesto'];
 
             $columnHeaders = array_merge($table_input, $table_candidate);
 
-            //validar que todos los campos sean obligatorio
-
-
+            // validar que todos los campos sean obligatorio
 
             foreach ($datos as $indice => $subArray) {
                 // Si el número de campos en el subarray es menor que el número de columnas en $columnHeaders
@@ -789,11 +756,10 @@ class CandidatosController extends Controller
                     $indicesConMenosDe13Campos[] = [
                         'identidad' => $datos[$indice]['identidad'],
                         'nombre' => $datos[$indice]['nombre'],
-                        'campos_faltantes' => $camposFaltantes
+                        'campos_faltantes' => $camposFaltantes,
                     ];
                 }
             }
-
 
             $tieneContenido = count($indicesConMenosDe13Campos) !== 0;
             if ($tieneContenido) {
@@ -807,15 +773,15 @@ class CandidatosController extends Controller
             foreach ($datos as $indice => $fila) {
 
                 $datos[$indice]['identidad'] = str_replace('-', '', $fila['identidad']);
-                if (!empty($fila['fecha_nacimiento']) && !empty($fila['fechaIngreso'])) {
+                if (! empty($fila['fecha_nacimiento']) && ! empty($fila['fechaIngreso'])) {
 
                     if (strpos($fila['fecha_nacimiento'], '/') > 0 && strpos($fila['fechaIngreso'], '/') > 0) {
                         //  dd($datos);
-                        $fecha_nacimiento = date_create_from_format("m/d/Y", $fila['fecha_nacimiento']);
-                        $fechaIngreso = date_create_from_format("m/d/Y", $fila['fechaIngreso']);
-                        if (!$fecha_nacimiento && !$fechaIngreso) {
-                            $fecha_nacimiento = date_create_from_format("d/m/Y", $fila['fecha_nacimiento']);
-                            $fechaIngreso = date_create_from_format("d/m/Y", $fila['fechaIngreso']);
+                        $fecha_nacimiento = date_create_from_format('m/d/Y', $fila['fecha_nacimiento']);
+                        $fechaIngreso = date_create_from_format('m/d/Y', $fila['fechaIngreso']);
+                        if (! $fecha_nacimiento && ! $fechaIngreso) {
+                            $fecha_nacimiento = date_create_from_format('d/m/Y', $fila['fecha_nacimiento']);
+                            $fechaIngreso = date_create_from_format('d/m/Y', $fila['fechaIngreso']);
                         }
 
                         if ($fecha_nacimiento && $fechaIngreso) {
@@ -826,21 +792,18 @@ class CandidatosController extends Controller
 
                         $registrosconFechamalForma[] = ['identidad' => $datos[$indice]['identidad'], 'nombre' => $datos[$indice]['nombre']];
 
-                        //capturando la excepcion
+                        // capturando la excepcion
 
                     }
                 }
             }
 
-
-
             if (count($registrosconFechamalForma) > 0) {
                 return response()->json([
-                    'error' => "Formato de fecha incorrecto en el registro en los registros",
-                    'indiceFecha' => $registrosconFechamalForma
+                    'error' => 'Formato de fecha incorrecto en el registro en los registros',
+                    'indiceFecha' => $registrosconFechamalForma,
                 ], 400);
             }
-
 
             /**
              * Creando primero los registros para los candidatos
@@ -848,7 +811,7 @@ class CandidatosController extends Controller
             $datosConEstado = [];
             $datosRegistroestado = [];
             /**
-             * para evitar hacer muchas consultas en el ciclo, haremos uso de la clausula whereIn, volcando 
+             * para evitar hacer muchas consultas en el ciclo, haremos uso de la clausula whereIn, volcando
              * la informacion en un @var collect
              */
             $identidades = array_column($datos, 'identidad');
@@ -858,11 +821,9 @@ class CandidatosController extends Controller
             /**
              * Validar si existe algun bloque de recomendacion
              */
-
             $validarRecomendacion = Ingresos::whereIn('identidad', $identidades)
                 ->where('recomendado', 'n')
                 ->get();
-
 
             $candidatosNuevos = [];
             foreach ($datos as $dt) {
@@ -870,9 +831,9 @@ class CandidatosController extends Controller
                 $existeCandidato = $validarExistencia->containsStrict('identidad', $dt['identidad']);
                 $tieneXcandidato = $validarXcandidato->containsStrict('identidad', $dt['identidad']);
                 $tieneBloqueoRecomendacion = $validarRecomendacion->containsStrict('identidad', $dt['identidad']);
-                //sino existe que proceda a crearlo caso contrario solo actualizar el campo activo en la tabla Candidatos 
-                if (!$existeCandidato && !$tieneXcandidato && !$tieneBloqueoRecomendacion) {
-                        // Crea un nuevo candidato si no existe
+                // sino existe que proceda a crearlo caso contrario solo actualizar el campo activo en la tabla Candidatos
+                if (! $existeCandidato && ! $tieneXcandidato && ! $tieneBloqueoRecomendacion) {
+                    // Crea un nuevo candidato si no existe
                     /**
                      * capturar los registros nuevos en un array para hacer una insercion masiva.
                      */
@@ -902,7 +863,7 @@ class CandidatosController extends Controller
                 $filaConEstado = [
                     'identidad' => $dt['identidad'],
                     'estado' => $estado,
-                    'nombre' => $dt['nombre'] . ' ' . $dt['apellido'],
+                    'nombre' => $dt['nombre'].' '.$dt['apellido'],
                 ];
 
                 $datosConEstado[] = $filaConEstado;
@@ -922,7 +883,6 @@ class CandidatosController extends Controller
                 $error = ['error' => $e->getMessage()];
             }
 
-
             /**
              * Validar si existe en otra empresa antes de hacer el ingro
              */
@@ -938,7 +898,7 @@ class CandidatosController extends Controller
                 ->where('activo', 's')
                 ->get();
             /**
-             * Validar si existe en la misma empresa pero esta inactivo, 
+             * Validar si existe en la misma empresa pero esta inactivo,
              * si esta inactivo, significa que debe hacer un ingreso nuevo en la misma empresa
              */
             $validarInactivoEmpresa = Ingresos::whereIn('identidad', $identidades)
@@ -946,17 +906,13 @@ class CandidatosController extends Controller
                 ->where('activo', 'n')
                 ->get();
 
-
             /**
              * Validar x en el candidato, si contiene x pedir informacion a Recursos humanos de ALTIA
              */
-
-
-
             foreach ($datos as $dt) {
                 $identidad = $dt['identidad'];
                 $idEmpresaActual = $dt['id_empresa'];
-                //verificar si existe en otra empresa
+                // verificar si existe en otra empresa
 
                 // Verificar si el ingreso está activo en alguna otra empresa
                 $ingresoExistenteEnOtraEmpresa = $validarExistenteEnOtraEmpresa->containsStrict('identidad', $identidad);
@@ -966,11 +922,11 @@ class CandidatosController extends Controller
                 $ingresoXactivoCandidato = $validarXcandidato->containsStrict('identidad', $identidad);
                 $ingresoNorecomendado = $validarRecomendacion->containsStrict('identidad', $identidad);
                 // Evaluar si es un registro nuevo
-                if ((!$ingresoExistenteEnMismaEmpresa && !$ingresoExistenteEnOtraEmpresa) && !$ingresoXactivoCandidato && !$ingresoNorecomendado) {
+                if ((! $ingresoExistenteEnMismaEmpresa && ! $ingresoExistenteEnOtraEmpresa) && ! $ingresoXactivoCandidato && ! $ingresoNorecomendado) {
                     // No existe en la misma empresa ni en otra empresa, crear un nuevo registro
                     $ingresoInactivoEnMismaEmpresa = $validarInactivoEmpresa->containsStrict('identidad', $identidad);
 
-                    if (!$ingresoInactivoEnMismaEmpresa) {
+                    if (! $ingresoInactivoEnMismaEmpresa) {
                         DB::beginTransaction();
                         $ingreso = Ingresos::firstOrCreate(
                             ['identidad' => $identidad, 'id_empresa' => $idEmpresaActual],
@@ -978,14 +934,14 @@ class CandidatosController extends Controller
                                 'fechaIngreso' => $dt['fechaIngreso'],
                                 'area' => $dt['area'],
                                 'id_puesto' => $dt['id_puesto'],
-                                'activo' => 's'
+                                'activo' => 's',
                             ]
                         );
                         DB::commit();
 
                         $estadoIngreso = 'Registro nuevo';
                     } else {
-                        if (!$ingresoXactivoCandidato) {
+                        if (! $ingresoXactivoCandidato) {
                             DB::beginTransaction();
                             $ingreso = Ingresos::create(
 
@@ -995,7 +951,7 @@ class CandidatosController extends Controller
                                     'fechaIngreso' => $dt['fechaIngreso'],
                                     'area' => $dt['area'],
                                     'id_puesto' => $dt['id_puesto'],
-                                    'activo' => 's'
+                                    'activo' => 's',
                                 ]
                             );
                             DB::commit();
@@ -1006,8 +962,6 @@ class CandidatosController extends Controller
                     }
                 } else {
                     // Ya existe en la misma empresa o en otra empresa
-
-
 
                     if ($ingresoExistenteEnMismaEmpresa) {
                         $estadoIngreso = 'Ya existe en la misma empresa';
@@ -1028,20 +982,13 @@ class CandidatosController extends Controller
 
                 $datosRegistroestado[] = [
                     'identidad' => $dt['identidad'],
-                    'estadoIngreso' => $estadoIngreso
+                    'estadoIngreso' => $estadoIngreso,
                 ];
-
-
-
-
-
-
 
                 // $dt['estado'] = $estado;
 
                 $registrosIngreso[] = $dt;
             }
-
 
             foreach ($datosConEstado as $dst => $dt) {
 
@@ -1054,19 +1001,14 @@ class CandidatosController extends Controller
 
             // dd($datosConEstado);
 
-
             return response()->json(['incomeJobs' => $datosConEstado, 'status' => 202]);
         } catch (Exception $e) {
             $registrosProblematicos[] = ['registro' => $fila2, 'error' => $e->getMessage()];
 
-
-
             return response()->json(['error' => $e->getMessage()], 400);
         }
 
-
         // Retorna una respuesta, por ejemplo, un mensaje de éxito
-
 
     }
 
@@ -1076,7 +1018,7 @@ class CandidatosController extends Controller
         $data = $request->all();
 
         // Verificar si se recibieron datos y extraer las identidades del arreglo
-        if (!empty($data)) {
+        if (! empty($data)) {
             $exportarEgresos = [];
 
             // Extraer las identidades del arreglo
@@ -1090,7 +1032,7 @@ class CandidatosController extends Controller
             }
 
             $bookExporter = 'egresos.xlsx';
-            if (!is_null($exportarEgresos) || !empty($exportarEgresos)) {
+            if (! is_null($exportarEgresos) || ! empty($exportarEgresos)) {
                 return Excel::download(new ExportTemplateOut($exportarEgresos), $bookExporter);
             } else {
                 return response()->json(['error' => 'error al exportar archivo', 'status' => 200]);
@@ -1101,13 +1043,11 @@ class CandidatosController extends Controller
         return response()->json(['error' => 'Datos no válidos'], 400);
     }
 
-
     /**
-     * Funcion para importar candidatos desde un archivo csv, 
+     * Funcion para importar candidatos desde un archivo csv,
      * el procesamiento y actualizacion de los egresos de una empresa,
      * Paso 1 obtener data de una peticion ajax
      */
-
     public function importarEgresos(Request $request)
     {
         $datos = [];
@@ -1120,13 +1060,13 @@ class CandidatosController extends Controller
                  */
                 $datos[$indice]['identidad'] = str_replace('-', '', $fila['identidad']);
                 $datos[$indice]['identidad'] = str_replace(' ', '', $fila['identidad']);
-                if (!empty($fila['fechaEgreso'])) {
+                if (! empty($fila['fechaEgreso'])) {
                     if (strpos($fila['fechaEgreso'], '/') > 0) {
 
-                        $fecha_egreso = date_create_from_format("m/d/Y", $fila['fechaEgreso']);
+                        $fecha_egreso = date_create_from_format('m/d/Y', $fila['fechaEgreso']);
 
-                        if (!$fecha_egreso) {
-                            $fecha_egreso = date_create_from_format("d/m/Y", $fila['fechaEgreso']);
+                        if (! $fecha_egreso) {
+                            $fecha_egreso = date_create_from_format('d/m/Y', $fila['fechaEgreso']);
                         }
 
                         if ($fecha_egreso) {
@@ -1134,12 +1074,11 @@ class CandidatosController extends Controller
                         }
                     } else {
 
-                        //capturando la excepcion
+                        // capturando la excepcion
                         throw new Exception("Formato de fecha incorrecto en la fila $indice");
                     }
                 }
             }
-
 
             $jsonData = json_encode($datos);
             if (DB::statement('CALL SPupdate_candidatos_egresos_from_json(?)', [$jsonData])) {
@@ -1148,7 +1087,7 @@ class CandidatosController extends Controller
                 return response()->json(['error' => 'No se puedo actualizar la informacion', 'icon' => 'warning', 'status' => 404]);
             }
         } catch (Exception $e) {
-            //throw $th;
+            // throw $th;
             return response()->json(['error' => $e->getMessage()]);
         }
     }
@@ -1167,7 +1106,7 @@ class CandidatosController extends Controller
                 return redirect()->back()->with('msjIngreso', 'ya existe en esta compañia');
             } else {
 
-                $ingreso = new Ingresos();
+                $ingreso = new Ingresos;
                 $ingreso->identidad = $request->input('identidad');
                 $ingreso->id_empresa = $request->input('id_empresa');
                 $ingreso->area = $request->input('area');
@@ -1188,23 +1127,17 @@ class CandidatosController extends Controller
         }
     }
 
-    /*Metodo para hacer un egreso */
+    /* Metodo para hacer un egreso */
     public function hacerEgreso(Request $request)
     {
         try {
 
-
-            if (!is_null($request)) {
-
-
-
+            if (! is_null($request)) {
 
                 $existemismaEmpresa = Egresos::where('identidad', $request->input('identidad'))
                     ->where('id_empresa', $request->input('id_empresa'))
                     ->where('activo', '=', 's')
                     ->get();
-
-
 
                 $candidato = Candidatos::where('identidad', $request->input('identidad'))->get();
 
@@ -1230,8 +1163,7 @@ class CandidatosController extends Controller
 
                     return redirect()->back()->with(['mensaje' => 'fue ingresado con exito'])->with(['icon' => 'success']);
                 }
-                //code...
-
+                // code...
 
             } else {
                 return response()->json(['mensaje' => 'es nulo']);
@@ -1244,7 +1176,7 @@ class CandidatosController extends Controller
     public function lockCandidate(Request $request)
     {
         try {
-            //Validacion de los campos con la informacion proveniente del fomulario de Bloqueo Candidatos
+            // Validacion de los campos con la informacion proveniente del fomulario de Bloqueo Candidatos
             $request->validate([
                 'identidad' => 'required|string',
                 'prohibirIngreso' => 'required|string',
@@ -1254,9 +1186,9 @@ class CandidatosController extends Controller
             $empresaId = auth()->user()->empresa_id;
             $identidad = $request->input('identidad');
 
-            if (!is_null($request)) {
-                //obteniendo el ultimo registro de la tabla egresos_ingresos
-                $ultimoEgreso = Egresos::where('identidad',)
+            if (! is_null($request)) {
+                // obteniendo el ultimo registro de la tabla egresos_ingresos
+                $ultimoEgreso = Egresos::where('identidad')
                     ->where('id_empresa', $empresaId)
                     ->where('activo', '=', 's')
                     ->get()
@@ -1273,7 +1205,6 @@ class CandidatosController extends Controller
                         $ultimoEgreso->save();
                     }
 
-
                     if ($candidato) {
 
                         $comentarioActual = $request->input('ComenProhibir');
@@ -1282,7 +1213,7 @@ class CandidatosController extends Controller
 
                             'comentarios' => $comentarioActual,
 
-                            'fechaBloqueo' => now()
+                            'fechaBloqueo' => now(),
                         ];
 
                         $comentariosActualizados = [];
@@ -1320,7 +1251,7 @@ class CandidatosController extends Controller
                 'ComenProhibir' => 'required|string',
             ]);
 
-            if (!is_null($request)) {
+            if (! is_null($request)) {
                 $ultimoEgreso = Egresos::where('identidad', $request->input('identidad'))
                     ->where('activo', '=', 'n')
                     ->get()
@@ -1344,7 +1275,7 @@ class CandidatosController extends Controller
 
                             'comentarios' => $comentarioActual,
 
-                            'fechaDesbloqueo' => now()
+                            'fechaDesbloqueo' => now(),
                         ];
 
                         $comentariosActualizados = [];
@@ -1373,7 +1304,6 @@ class CandidatosController extends Controller
         }
     }
 
-
     public function enviarSolicitudRecomendacion(Request $request)
     {
         $mensaje = $request->input('mensaje');
@@ -1389,7 +1319,7 @@ class CandidatosController extends Controller
         $correoSolicitante = auth()->user()->email;
         $nombreSolicitante = auth()->user()->name;
         $enviarsolicitud = new EnviarSolicitudCandidato($mensaje, $datos, $correoSolicitante, $nombreSolicitante);
-        //los usuarios que tengan en el perfil habilitado la opcion bloqueocolaborador pueden recibir las notificaciones de correo sobre el desbloqueo de colaborador
+        // los usuarios que tengan en el perfil habilitado la opcion bloqueocolaborador pueden recibir las notificaciones de correo sobre el desbloqueo de colaborador
         $userto = User::select('users.email')->where('perfiles.bloqueocolaborador', '1')->join('perfiles', 'users.perfil_id', '=', 'perfiles.id')->get();
         try {
             foreach ($userto as $ut) {
@@ -1418,14 +1348,16 @@ class CandidatosController extends Controller
             $mensaje = [
                 'success' => 'se ha desbloqueado la recomendacion con exito',
                 'id' => $desbloquearRecomendacion[0]->id,
-                'status' => 200
+                'status' => 200,
             ];
+
             return response()->json($mensaje);
         } catch (Exception $e) {
             $mensaje = [
                 'fail' => $e->getMessage(),
-                'status' => 404
+                'status' => 404,
             ];
+
             return response()->json($mensaje);
         }
     }

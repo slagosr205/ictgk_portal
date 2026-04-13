@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Portal HHRR') }}</title>
-    <link rel="icon" href="{{Storage::url('logo__Altia.svg')}}" type="image/svg+xml">
+    <title>{{ $branding['name'] ?? config('app.name', 'Portal HHRR') }}</title>
+    @php
+        $fav = $branding['assets']['favicon_url'] ?? null;
+    @endphp
+    @if ($fav)
+        <link rel="icon" href="{{ $fav }}" type="image/svg+xml">
+    @endif
     
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
@@ -34,11 +39,35 @@
         
     ])
 
+    @stack('styles')
+
+    @php
+        $cssVars = $branding['cssVars'] ?? [];
+    @endphp
+    @if (!empty($cssVars))
+        <style>
+            :root {
+@foreach ($cssVars as $k => $v)
+                {{ $k }}: {{ $v }};
+@endforeach
+            }
+        </style>
+    @endif
+
+    <script>
+        window.__APP_BRANDING__ = @json($branding ?? []);
+    </script>
+
     @stack('scripts')
 </head>
 
 @guest
-    <body class="login" style="height: 100vh; overflow: hidden;">
+    @php
+        // ABSOLUTE URL so it works even when CSS is served from Vite dev server.
+        $loginBg = $branding['assets']['background_url'] ?? null;
+        $loginBgStyle = $loginBg ? "--brand-login-bg: url('" . $loginBg . "');" : '';
+    @endphp
+    <body class="login" style="height: 100vh; overflow: hidden; {{ $loginBgStyle }}">
         <main>
             @yield('content')
         </main>

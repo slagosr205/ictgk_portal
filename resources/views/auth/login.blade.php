@@ -17,7 +17,7 @@
         <div class="col-12 col-md-8 col-lg-6 col-xl-5 d-flex justify-content-center">
             <div class="card shadow-lg sombre login-card-modern" style="min-width: 400px; max-width: 500px;">
                 <div class="card-header text-center bg-white border-0 pt-4 pb-3">
-                    <img src="{{ Storage::url('logo__Altia.svg') }}" alt="Logo" class="img-fluid mb-3 login-logo" style="max-height: 80px;">
+                    <img src="{{ $branding['assets']['logo_url'] ?? '' }}" alt="Logo" class="img-fluid mb-3 login-logo" style="max-height: 80px;">
                     <h4 class="text-dark mb-0">{{ __('Login') }}</h4>
                 </div>
 

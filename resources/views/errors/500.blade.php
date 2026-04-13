@@ -19,7 +19,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #072132 0%, #0a2e45 50%, #072132 100%);
+            background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand-secondary) 50%, var(--brand-dark) 100%);
             overflow: hidden;
             position: relative;
         }
@@ -36,7 +36,7 @@
         body::before {
             width: 600px;
             height: 600px;
-            background: #32C36C;
+            background: var(--brand-primary);
             top: -200px;
             right: -150px;
             animation: float 8s ease-in-out infinite;
@@ -45,7 +45,7 @@
         body::after {
             width: 400px;
             height: 400px;
-            background: #32C36C;
+            background: var(--brand-primary);
             bottom: -100px;
             left: -100px;
             animation: float 6s ease-in-out infinite reverse;
@@ -98,14 +98,14 @@
         .error-icon {
             width: 90px;
             height: 90px;
-            background: linear-gradient(135deg, #32C36C 0%, #28a85a 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 30px;
             animation: iconBounce 3s ease-in-out infinite;
-            box-shadow: 0 8px 30px rgba(50, 195, 108, 0.3);
+            box-shadow: 0 8px 30px rgb(var(--brand-primary-rgb) / 0.3);
         }
 
         .error-icon i {
@@ -123,7 +123,7 @@
         }
 
         .error-code span {
-            color: #32C36C;
+            color: var(--brand-primary);
         }
 
         .error-title {
@@ -152,7 +152,7 @@
             align-items: center;
             gap: 8px;
             padding: 12px 28px;
-            background: linear-gradient(135deg, #32C36C 0%, #28a85a 100%);
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
             color: #fff;
             border: none;
             border-radius: 10px;
@@ -161,13 +161,13 @@
             text-decoration: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(50, 195, 108, 0.3);
+            box-shadow: 0 4px 15px rgb(var(--brand-primary-rgb) / 0.3);
             font-family: inherit;
         }
 
         .btn-primary-custom:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(50, 195, 108, 0.4);
+            box-shadow: 0 6px 25px rgb(var(--brand-primary-rgb) / 0.4);
         }
 
         .btn-secondary-custom {

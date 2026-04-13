@@ -8,14 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class PerfilModel extends Model
 {
     use HasFactory;
-    protected $table='perfiles';
+
+    protected $table = 'perfiles';
+
     protected $fillable = [
         'perfilesdescrip',
         'ingreso',
         'egreso',
         'bloqueocolaborador',
         'gestiontablas',
-        'visualizarinformes'
+        'visualizarinformes',
+        // Access to Seguridad module (restricted candidates)
+        'seguridad',
 
     ];
 }

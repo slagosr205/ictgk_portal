@@ -15,16 +15,24 @@ window.$ = jQuery;
 
 window.jQuery = jQuery
 var btnupdate;
-var table=$('#tbcandidatos').DataTable({
-   
-    responsive:true,
-    ordering:false,
-    initComplete:function(){
-        var searchInput = $('#dt-search-0');
+
+// DataTables: only initialize when the table exists on the page.
+const tbCandidatosEl = document.getElementById('tbcandidatos');
+if (tbCandidatosEl) {
+    $('#tbcandidatos').DataTable({
+        responsive: true,
+        ordering: false,
+        initComplete: function () {
+            var searchInput = $('#dt-search-0');
             searchInput.addClass('border');
-    }
-});
-var tbperfiles=new DataTable('#tbperfiles')
+        }
+    });
+}
+
+const tbPerfilesEl = document.getElementById('tbperfiles');
+if (tbPerfilesEl) {
+    new DataTable('#tbperfiles');
+}
 
 var dtUsuariosEl = document.getElementById('dtUsuarios');
 if (dtUsuariosEl && dtUsuariosEl.dataset.datatable === 'true') {

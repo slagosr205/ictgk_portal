@@ -1,32 +1,23 @@
 <?php
 
-use App\Exports\PuestosExport;
-use App\Http\Controllers\CandidatosController;
-use App\Http\Controllers\InformesController;
-use App\Models\Candidatos;
-use App\Models\Egresos;
-use App\Models\PerfilModel;
-use App\Models\PuestosModel;
-use Faker\Provider\ar_EG\Company;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use League\Csv\Reader;
-use League\Csv\Writer;
 use App\Exports\ExportTemplate;
 use App\Exports\ExportTemplateCandidate;
+use App\Http\Controllers\Admin\BrandingAdminController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BloqueoController;
 use App\Http\Controllers\EgresoController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\SeguridadController;
 use App\Http\Controllers\ValidadorImportacionController;
+use App\Models\Candidatos;
 use App\Models\Empresas;
+use App\Models\PerfilModel;
 use App\Models\User;
-use Illuminate\Support\Facades\Http;
+use App\Support\Branding\BrandingManager;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -52,124 +43,136 @@ Route::post('logout',function(){
 })->name('logout');*/
 
 Auth::routes();
+
+// Public endpoint for frontend consumers (optional).
+Route::get('/branding.json', function () {
+    return response()->json(app(BrandingManager::class)->public());
+})->name('branding.json');
+
 Route::get('/', function () {
-  // Verifica si el usuario está autenticado
-  if (Auth::check()) {
-    // Obtén el perfil del usuario autenticado
-    $perfilUsers = PerfilModel::where('id', Auth::user()->perfil_id)->get();
-    // Redirige a la página de inicio con el perfil del usuario
-    return view('home')->with('perfilUsers', $perfilUsers);
-  }
+    // Verifica si el usuario está autenticado
+    if (Auth::check()) {
+        // Obtén el perfil del usuario autenticado
+        $perfilUsers = PerfilModel::where('id', Auth::user()->perfil_id)->get();
 
-  // Redirige a la página de inicio de sesión si el usuario no está autenticado
-  return view('auth.login');
+        // Redirige a la página de inicio con el perfil del usuario
+        return view('home')->with('perfilUsers', $perfilUsers);
+    }
+
+    // Redirige a la página de inicio de sesión si el usuario no está autenticado
+    return view('auth.login');
 });
-
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 Route::middleware(['auth', 'check.session'])->group(function () {
 
-  Route::get('/dmtables', [AdminController::class, 'index'])->name('candidatos');
+    Route::get('/dmtables', [AdminController::class, 'index'])->name('candidatos');
 
-  Route::post('/carga-masiva', [App\Http\Controllers\CandidatosController::class, 'recibirCsvCandidatos'])->name('cargar');
-  Route::get('/informes', [App\Http\Controllers\InformesController::class, 'GetInformes'])->name('informes');
-  Route::get('/infopersonal/{dni}', [App\Http\Controllers\CandidatosController::class, 'GetIndividualInfo'])->name('infopersonal');
-  Route::post('/actualizacion-ficha', [App\Http\Controllers\CandidatosController::class, 'Actualizacion_ficha'])->name('actualizacion_ficha');
+    // Vista para equipo de seguridad: candidatos restringidos/bloqueados del parque
+    Route::get('/seguridad', [SeguridadController::class, 'index'])
+        ->name('seguridad.index')
+        ->middleware('seguridad.access');
 
-  /**Recibir ingresos masivos, hara validacion de todos los ingresos 
-   * 1. Validar que existan, sino existen en la tabla candidatos entonces que se pueda registrar primero
-   * 2. Si existen en la tabla candidato que solo se agreguen en la tabla de ingresos
-   */
+    Route::post('/carga-masiva', [App\Http\Controllers\CandidatosController::class, 'recibirCsvCandidatos'])->name('cargar');
+    Route::get('/informes', [App\Http\Controllers\InformesController::class, 'GetInformes'])->name('informes');
+    Route::get('/infopersonal/{dni}', [App\Http\Controllers\CandidatosController::class, 'GetIndividualInfo'])->name('infopersonal');
+    Route::post('/actualizacion-ficha', [App\Http\Controllers\CandidatosController::class, 'Actualizacion_ficha'])->name('actualizacion_ficha');
 
-  Route::post('/ingresos-masivos', [App\Http\Controllers\CandidatosController::class, 'importarIngresos'])->name('cargaIng');
-  Route::post('/ingresos', [App\Http\Controllers\CandidatosController::class, 'hacerIngreso'])->name('hacerIgresos');
-  Route::post('/egresos', [App\Http\Controllers\CandidatosController::class, 'hacerEgreso'])->name('hacerEgresos');
-  Route::post('/ingresos-nuevos', [App\Http\Controllers\CandidatosController::class, 'insertarCandidato'])->name('insertarCandidato');
+    /**Recibir ingresos masivos, hara validacion de todos los ingresos
+     * 1. Validar que existan, sino existen en la tabla candidatos entonces que se pueda registrar primero
+     * 2. Si existen en la tabla candidato que solo se agreguen en la tabla de ingresos
+     */
 
+    Route::post('/ingresos-masivos', [App\Http\Controllers\CandidatosController::class, 'importarIngresos'])->name('cargaIng');
+    Route::post('/ingresos', [App\Http\Controllers\CandidatosController::class, 'hacerIngreso'])->name('hacerIgresos');
+    Route::post('/egresos', [App\Http\Controllers\CandidatosController::class, 'hacerEgreso'])->name('hacerEgresos');
+    Route::post('/ingresos-nuevos', [App\Http\Controllers\CandidatosController::class, 'insertarCandidato'])->name('insertarCandidato');
 
+    Route::get('/perfiles', [App\Http\Controllers\PerfilController::class, 'show'])->name('seccion-perfiles');
 
-  Route::get('/perfiles', [App\Http\Controllers\PerfilController::class, 'show'])->name('seccion-perfiles');
+    Route::post('/registrar-perfil', [App\Http\Controllers\PerfilController::class, 'create'])->name('registrarperfil');
 
-  Route::post('/registrar-perfil', [App\Http\Controllers\PerfilController::class, 'create'])->name('registrarperfil');
+    Route::post('/update-role', [App\Http\Controllers\PerfilController::class, 'update'])->name('updateRole');
+    /* Rutas de Empresas */
+    Route::get('/empresas', [App\Http\Controllers\EmpresasController::class, 'index'])->name('empresas');
+    Route::post('/insert-company', [App\Http\Controllers\EmpresasController::class, 'insertCompany'])->name('insertCompany');
+    Route::post('/insert-company-bulk', [App\Http\Controllers\EmpresasController::class, 'insertCompanyBulk'])->name('insertCompanyBulk');
+    Route::get('/consulting-company/{id}', [App\Http\Controllers\EmpresasController::class, 'consultingCompany'])->name('consultingCompany');
+    Route::post('/update-company', [App\Http\Controllers\EmpresasController::class, 'updateCompany'])->name('updateCompany');
+    Route::post('/update-company-state', [App\Http\Controllers\EmpresasController::class, 'updateCompanyState'])->name('updateCompanyState');
+    /**Rutas de departamentos */
+    Route::get('/departamentos', [App\Http\Controllers\DepartamentosController::class, 'index'])->name('departamentos');
+    Route::post('/insert-departament', [App\Http\Controllers\DepartamentosController::class, 'insertDepartament'])->name('insertDepartament');
+    Route::post('/insert-departament-bulk', [App\Http\Controllers\DepartamentosController::class, 'insertDepartamentBulk'])->name('insertDepartamentBulk');
+    /* Rutas de Puestos */
+    Route::get('/puestos', [App\Http\Controllers\PuestosController::class, 'index'])->name('puestos');
 
-  Route::post('/update-role', [App\Http\Controllers\PerfilController::class, 'update'])->name('updateRole');
-  /*Rutas de Empresas */
-  Route::get('/empresas', [App\Http\Controllers\EmpresasController::class, 'index'])->name('empresas');
-  Route::post('/insert-company', [App\Http\Controllers\EmpresasController::class, 'insertCompany'])->name('insertCompany');
-  Route::post('/insert-company-bulk', [App\Http\Controllers\EmpresasController::class, 'insertCompanyBulk'])->name('insertCompanyBulk');
-  Route::get('/consulting-company/{id}', [App\Http\Controllers\EmpresasController::class, 'consultingCompany'])->name('consultingCompany');
-  Route::post('/update-company', [App\Http\Controllers\EmpresasController::class, 'updateCompany'])->name('updateCompany');
-  Route::post('/update-company-state', [App\Http\Controllers\EmpresasController::class, 'updateCompanyState'])->name('updateCompanyState');
-  /**Rutas de departamentos */
-  Route::get('/departamentos', [App\Http\Controllers\DepartamentosController::class, 'index'])->name('departamentos');
-  Route::post('/insert-departament', [App\Http\Controllers\DepartamentosController::class, 'insertDepartament'])->name('insertDepartament');
-  Route::post('/insert-departament-bulk', [App\Http\Controllers\DepartamentosController::class, 'insertDepartamentBulk'])->name('insertDepartamentBulk');
-  /*Rutas de Puestos */
-  Route::get('/puestos', [App\Http\Controllers\PuestosController::class, 'index'])->name('puestos');
+    Route::get('/plantilla-ingresos', function () {
+        //
 
-  Route::get('/plantilla-ingresos', function () {
-    //
+        $excel = new ExportTemplate;
 
-    $excel = new ExportTemplate();
+        return Excel::download($excel, 'plantilla_ingresos.csv');
+    })->name('downloadTemplateIn')->middleware('verificar_perfil');
 
+    Route::get('/plantilla-candidatos', function () {
+        $exportcandidate = new ExportTemplateCandidate;
 
-    return Excel::download($excel, 'plantilla_ingresos.csv');
-  })->name('downloadTemplateIn')->middleware('verificar_perfil');
+        return Excel::download($exportcandidate, 'plantilla_candidatos.xlsx');
+    })->name('downloadTemplateCandidate');
 
-  Route::get('/plantilla-candidatos', function () {
-    $exportcandidate = new ExportTemplateCandidate();
-    return Excel::download($exportcandidate, 'plantilla_candidatos.xlsx');
-  })->name('downloadTemplateCandidate');
+    Route::post('/register2', [App\Http\Controllers\Auth\RegisterController::class, 'registroNuevo'])->name('register2');
 
+    // Acciones relacionadas a restricciones/bloqueos: solo admin/seguridad
+    Route::post('/bloqueo', [App\Http\Controllers\CandidatosController::class, 'lockCandidate'])->name('lockCandidate')->middleware('seguridad.access');
+    Route::post('/desbloqueo', [App\Http\Controllers\CandidatosController::class, 'unlockCandidate'])->name('unlockCandidate')->middleware('seguridad.access');
+    Route::post('/solicitud-desbloqueo-recomendacion', [App\Http\Controllers\CandidatosController::class, 'enviarSolicitudRecomendacion'])->name('SolicitudDesbRecom')->middleware('seguridad.access');
+    Route::post('/desbloquear-recomendacion', [App\Http\Controllers\CandidatosController::class, 'desbloquearRecomendacion'])->name('desbloqueoRecomendacion')->middleware('seguridad.access');
 
+    Route::get('/consulta-puesto/{id}', [App\Http\Controllers\PuestosController::class, 'dataPuestos'])->name('consultaPuesto');
+    Route::get('/consultaPuestosxEmpresas/{idEmpresas}', [App\Http\Controllers\PuestosController::class, 'puestosxEmpresas'])->name('consultaPuestosxEmpresas');
+    Route::post('/insert-positions', [App\Http\Controllers\PuestosController::class, 'create'])->name('insertPositions');
+    Route::post('/insert-positions-bulk', [App\Http\Controllers\PuestosController::class, 'insertPositionsBulk'])->name('insertPositionsBulk');
+    Route::post('/update-positions', [App\Http\Controllers\PuestosController::class, 'updatePosition'])->name('updatePosition');
 
-  Route::post('/register2', [App\Http\Controllers\Auth\RegisterController::class, 'registroNuevo'])->name('register2');
+    Route::post('/export-data-output', [App\Http\Controllers\CandidatosController::class, 'exportarEgresos'])->name('exportOutput');
+    Route::post('/import-data-output', [App\Http\Controllers\CandidatosController::class, 'importarEgresos'])->name('importOutput');
+    Route::get('/consulting-departament/{departamento_id}', [App\Http\Controllers\DepartamentosController::class, 'show'])->name('consultingDepartament');
+    Route::post('/update-departament', [App\Http\Controllers\DepartamentosController::class, 'updateDepartament'])->name('updateDepartament');
+    Route::patch('/users/{id}/update-status', [App\Http\Controllers\Auth\RegisterController::class, 'updateStatus'])->name('users.updateStatus');
+    Route::patch('/users/{id}/update-password', [App\Http\Controllers\Auth\RegisterController::class, 'updatePassword'])->name('users.updatePassword');
+    Route::get('/ingresosxempresas', [App\Http\Controllers\InformesController::class, 'GetData'])->name('ingresosxempresas');
+    Route::get('/egresosxempresas', [App\Http\Controllers\InformesController::class, 'GetDataOut'])->name('egresosxempresas');
+    Route::get('/edadesxestado', [App\Http\Controllers\InformesController::class, 'GetDataState'])->name('edadesxestado');
+    Route::get('/egresosxingresos', [App\Http\Controllers\InformesController::class, 'IngresosxEgresos'])->name('egresosxingresos');
+    Route::get('/renunciasxGenero', [App\Http\Controllers\InformesController::class, 'RenunciasxGenero'])->name('renunciasxGenero');
+    Route::get('/monitor-sesion', [App\Http\Controllers\InformesController::class, 'GetLastSessionUser'])->name('monitorSesiones');
+    Route::get('/consulting-user', [App\Http\Controllers\HomeController::class, 'cargarDatosUsuario'])->name('datosUsuario');
 
-  Route::post('/bloqueo', [App\Http\Controllers\CandidatosController::class, 'lockCandidate'])->name('lockCandidate');
-  Route::post('/desbloqueo', [App\Http\Controllers\CandidatosController::class, 'unlockCandidate'])->name('unlockCandidate');
-  Route::post('/solicitud-desbloqueo-recomendacion', [App\Http\Controllers\CandidatosController::class, 'enviarSolicitudRecomendacion'])->name('SolicitudDesbRecom');
-  Route::post('/desbloquear-recomendacion', [App\Http\Controllers\CandidatosController::class, 'desbloquearRecomendacion'])->name('desbloqueoRecomendacion');
+    // Validador de Importación
+    Route::middleware('auth')->prefix('validador-importacion')->name('validador.')->group(function () {
 
-  Route::get('/consulta-puesto/{id}', [App\Http\Controllers\PuestosController::class, 'dataPuestos'])->name('consultaPuesto');
-  Route::get('/consultaPuestosxEmpresas/{idEmpresas}', [App\Http\Controllers\PuestosController::class, 'puestosxEmpresas'])->name('consultaPuestosxEmpresas');
-  Route::post('/insert-positions', [App\Http\Controllers\PuestosController::class, 'create'])->name('insertPositions');
-  Route::post('/insert-positions-bulk', [App\Http\Controllers\PuestosController::class, 'insertPositionsBulk'])->name('insertPositionsBulk');
-  Route::post('/update-positions', [App\Http\Controllers\PuestosController::class, 'updatePosition'])->name('updatePosition');
+        Route::get('/', [ValidadorImportacionController::class, 'index'])->name('index');
+        Route::post('/validar', [ValidadorImportacionController::class, 'validar'])->name('validar');
+        Route::post('/revalidar', [ValidadorImportacionController::class, 'revalidarRegistro'])->name('revalidar');
+        Route::post('/confirmar', [ValidadorImportacionController::class, 'confirmar'])->name('confirmar');
+        Route::get('/catalogos', [ValidadorImportacionController::class, 'catalogos'])->name('catalogos');
+        Route::get('/plantilla', [ValidadorImportacionController::class, 'descargarPlantilla'])->name('plantilla');
+    });
 
-  Route::post('/export-data-output', [App\Http\Controllers\CandidatosController::class, 'exportarEgresos'])->name('exportOutput');
-  Route::post('/import-data-output', [App\Http\Controllers\CandidatosController::class, 'importarEgresos'])->name('importOutput');
-  Route::get('/consulting-departament/{departamento_id}', [App\Http\Controllers\DepartamentosController::class, 'show'])->name('consultingDepartament');
-  Route::post('/update-departament', [App\Http\Controllers\DepartamentosController::class, 'updateDepartament'])->name('updateDepartament');
-  Route::patch('/users/{id}/update-status', [App\Http\Controllers\Auth\RegisterController::class, 'updateStatus'])->name('users.updateStatus');
-  Route::patch('/users/{id}/update-password', [App\Http\Controllers\Auth\RegisterController::class, 'updatePassword'])->name('users.updatePassword');
-  Route::get('/ingresosxempresas', [App\Http\Controllers\InformesController::class, 'GetData'])->name('ingresosxempresas');
-  Route::get('/egresosxempresas', [App\Http\Controllers\InformesController::class, 'GetDataOut'])->name('egresosxempresas');
-  Route::get('/edadesxestado', [App\Http\Controllers\InformesController::class, 'GetDataState'])->name('edadesxestado');
-  Route::get('/egresosxingresos', [App\Http\Controllers\InformesController::class, 'IngresosxEgresos'])->name('egresosxingresos');
-  Route::get('/renunciasxGenero', [App\Http\Controllers\InformesController::class, 'RenunciasxGenero'])->name('renunciasxGenero');
-  Route::get('/monitor-sesion', [App\Http\Controllers\InformesController::class, 'GetLastSessionUser'])->name('monitorSesiones');
-  Route::get('/consulting-user', [App\Http\Controllers\HomeController::class, 'cargarDatosUsuario'])->name('datosUsuario');
+    Route::middleware('auth')->prefix('egresos')->group(function () {
+        Route::get('/', [EgresoController::class, 'index'])->name('egresos.index');
+        Route::post('/listar', [EgresoController::class, 'listar'])->name('egresos.listar');
+        Route::post('/procesar', [EgresoController::class, 'procesar'])->name('egresos.procesar');
+        Route::get('/catalogos', [EgresoController::class, 'catalogos'])->name('egresos.catalogos');
+    });
+});
 
-
-  // Validador de Importación
-  Route::middleware('auth')->prefix('validador-importacion')->name('validador.')->group(function () {
-
-    Route::get('/', [ValidadorImportacionController::class, 'index'])->name('index');
-    Route::post('/validar', [ValidadorImportacionController::class, 'validar'])->name('validar');
-    Route::post('/revalidar', [ValidadorImportacionController::class, 'revalidarRegistro'])->name('revalidar');
-    Route::post('/confirmar', [ValidadorImportacionController::class, 'confirmar'])->name('confirmar');
-    Route::get('/catalogos', [ValidadorImportacionController::class, 'catalogos'])->name('catalogos');
-    Route::get('/plantilla', [ValidadorImportacionController::class, 'descargarPlantilla'])->name('plantilla');
-  });
-
-
-  Route::middleware('auth')->prefix('egresos')->group(function () {
-    Route::get('/', [EgresoController::class, 'index'])->name('egresos.index');
-    Route::post('/listar', [EgresoController::class, 'listar'])->name('egresos.listar');
-    Route::post('/procesar', [EgresoController::class, 'procesar'])->name('egresos.procesar');
-    Route::get('/catalogos', [EgresoController::class, 'catalogos'])->name('egresos.catalogos');
-  });
+Route::middleware(['auth', 'check.session', 'branding.admin'])->prefix('admin')->group(function () {
+    Route::get('/branding/{brandKey?}', [BrandingAdminController::class, 'edit'])->name('admin.branding.edit');
+    Route::put('/branding/{brandKey}', [BrandingAdminController::class, 'update'])->name('admin.branding.update');
+    Route::put('/branding/{brandKey}/activate', [BrandingAdminController::class, 'activate'])->name('admin.branding.activate');
 });
 
 Route::post('/bloqueo-parqueo', [BloqueoController::class, 'recibirBloqueos'])->name('blockPark');
